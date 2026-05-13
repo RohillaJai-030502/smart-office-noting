@@ -1,0 +1,12 @@
+# Virtual Environment
+venv/
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# Mac OS generated files
+.DS_Store
+
+# Windows generated files
+Thumbs.db

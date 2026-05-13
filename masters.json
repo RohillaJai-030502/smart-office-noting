@@ -1,0 +1,24 @@
+{
+    "masters": [
+        {
+            "id": "master_001",
+            "name": "Call for Training Nominations",
+            "description": "Generates the bilingual notice soliciting trainee requirements from scientists.",
+            "filename": "master_001_industrial_training.docx",
+            "category": "Internships",
+            "form_type": "fillable",
+            "created_at": "2026-05-13",
+            "is_default": true
+        },
+        {
+            "id": "master_002",
+            "name": "Trainee Requirement Form",
+            "description": "Blank printable form for scientists to detail their required disciplines and skills.",
+            "filename": "master_002_trainee_requirement_form.docx",
+            "category": "Internships",
+            "form_type": "static",
+            "created_at": "2026-05-13",
+            "is_default": true
+        }
+    ]
+}
