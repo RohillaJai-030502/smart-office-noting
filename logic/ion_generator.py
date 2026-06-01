@@ -71,7 +71,8 @@ def build_departments_table(doc, departments):
 
 def generate_ion(master_filename, data):
     """
-    Fill placeholders in master DOCX and save as new ION notice
+    Universal Generator: Fills placeholders in master DOCX (Static & Dynamic)
+    and saves as new document.
     """
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -79,16 +80,23 @@ def generate_ion(master_filename, data):
     if not os.path.exists(master_path):
         raise FileNotFoundError(f"Master not found: {master_path}")
 
-    # Copy master to output
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"ION_{data['degree'].replace('/', '_')}_{data['start_month']}_{data['end_year']}_{timestamp}.docx"
+    
+    # Smart Filename Generation: Checks if it's the legacy ION form or a new dynamic form
+    if data.get("degree"):
+        degree_safe = data['degree'].replace('/', '_')
+        filename = f"ION_{degree_safe}_{data.get('start_month', '')}_{data.get('end_year', '')}_{timestamp}.docx"
+    else:
+        # Generic name for dynamic forms
+        filename = f"Generated_Doc_{timestamp}.docx"
+        
     output_path = os.path.join(OUTPUT_DIR, filename)
     shutil.copy2(master_path, output_path)
 
     # Open copied document
     doc = Document(output_path)
 
-    # Build placeholders dict
+    # Build placeholders dict (Preserves legacy mappings for backward compatibility)
     placeholders = {
         "{{DEGREE}}":                   data.get("degree", ""),
         "{{START_MONTH}}":              data.get("start_month", ""),
@@ -101,6 +109,12 @@ def generate_ion(master_filename, data):
         "{{SIGNATORY_NAME}}":           data.get("signatory_name", ""),
         "{{SIGNATORY_DESIGNATION}}":    data.get("signatory_designation", ""),
     }
+
+    # 🚀 DYNAMIC INJECTION: Loops through any new variables sent from the web form
+    for key, value in data.items():
+        if isinstance(value, str):
+            # Maps the dictionary key 'employee_name' to the document tag '{{employee_name}}'
+            placeholders[f"{{{{{key}}}}}"] = value
 
     # Replace placeholders in all paragraphs
     dept_para_index = None
@@ -117,7 +131,7 @@ def generate_ion(master_filename, data):
                 for para in cell.paragraphs:
                     replace_in_paragraph(para, placeholders)
 
-    # Handle departments table placeholder
+    # Handle legacy departments table placeholder
     if dept_para_index is not None:
         dept_para = doc.paragraphs[dept_para_index]
         departments = data.get("departments", [])

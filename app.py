@@ -1,13 +1,16 @@
 # ============================================================
-# app.py — ION Generator Flask Application
+# app.py — ION Generator Flask Application (Upgraded)
 # ============================================================
 
-from flask import Flask, render_template, request, send_file, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, send_file, redirect, url_for, session, jsonify, flash
+from werkzeug.utils import secure_filename
 from logic.ion_generator import generate_ion
 from logic.create_master import create_default_master
 import os
 import json
 import shutil
+import re
+import docx
 from datetime import datetime
 
 app = Flask(__name__)
@@ -71,6 +74,27 @@ def check_password(password):
     config = load_config()
     return password == config.get("password", "Tbrl0000")
 
+# ── NEW HELPER: Auto-Extract Variables ──
+def extract_variables_from_docx(filepath):
+    """Reads a .docx file and extracts all variables inside {{ }}"""
+    doc = docx.Document(filepath)
+    variables = set()
+    pattern = r'\{\{(.+?)\}\}'
+    
+    for para in doc.paragraphs:
+        matches = re.findall(pattern, para.text)
+        for match in matches:
+            variables.add(match.strip())
+            
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                matches = re.findall(pattern, cell.text)
+                for match in matches:
+                    variables.add(match.strip())
+                    
+    return list(variables)
+
 # ══════════════════════════════════════
 # DASHBOARD
 # ══════════════════════════════════════
@@ -82,7 +106,7 @@ def index():
     )
 
 # ══════════════════════════════════════
-# ION NOTICE FORM
+# ION NOTICE FORM (Legacy / Original Form)
 # ══════════════════════════════════════
 @app.route("/ion-notice", methods=["GET"])
 def ion_notice():
@@ -99,7 +123,6 @@ def ion_notice():
         masters=masters
     )
 
-# ── Save Defaults ──
 @app.route("/save-defaults", methods=["POST"])
 def save_defaults_route():
     defaults = {
@@ -123,7 +146,6 @@ def save_defaults_route():
     }
     return redirect(url_for("ion_notice"))
 
-# ── Preview ──
 @app.route("/preview", methods=["POST"])
 def preview():
     departments = request.form.getlist("departments")
@@ -150,7 +172,6 @@ def preview():
     session["form_data"] = data
     return render_template("ion_preview.html", data=data)
 
-# ── Edit (back from preview) ──
 @app.route("/edit", methods=["POST"])
 def edit():
     session["form_data"] = {
@@ -169,7 +190,6 @@ def edit():
     }
     return redirect(url_for("ion_notice"))
 
-# ── Generate (direct download) ──
 @app.route("/generate", methods=["POST"])
 def generate():
     masters   = load_masters()
@@ -201,7 +221,6 @@ def generate():
     })
     return send_file(filepath, as_attachment=True)
 
-# ── Download after Preview ──
 @app.route("/download", methods=["POST"])
 def download():
     masters   = load_masters()
@@ -233,7 +252,6 @@ def download():
     })
     return send_file(filepath, as_attachment=True)
 
-# ── Download from History ──
 @app.route("/history/download/<filename>")
 def download_history(filename):
     filepath = os.path.join("generated_notices", filename)
@@ -241,13 +259,11 @@ def download_history(filename):
         return send_file(filepath, as_attachment=True)
     return "File not found", 404
 
-# ── Clear History ──
 @app.route("/history/clear", methods=["POST"])
 def clear_history():
     save_json(HISTORY_FILE, {"history": []})
     return redirect(url_for("index"))
 
-# ── Download Static Form Directly ──
 @app.route("/download-static/<master_id>", methods=["GET"])
 def download_static(master_id):
     masters = load_masters()
@@ -256,7 +272,6 @@ def download_static(master_id):
     if master and master.get("form_type") == "static":
         filepath = os.path.join("masters", master["filename"])
         if os.path.exists(filepath):
-            # Save history so HR admins can track who downloaded the blank forms
             save_history({
                 "filename": master["filename"],
                 "degree": "Blank Form",
@@ -325,7 +340,6 @@ def masters_lock():
     session.pop("master_unlocked", None)
     return redirect(url_for("index"))
 
-# ── Create New Master from Existing ──
 @app.route("/masters/create", methods=["POST"])
 def create_master():
     if not session.get("master_unlocked"):
@@ -341,28 +355,68 @@ def create_master():
     masters     = load_masters()
     source      = next((m for m in masters if m["id"] == source_id), masters[0])
 
-    # Generate new ID
     new_id       = f"master_{str(len(masters)+1).zfill(3)}"
     new_filename = f"{new_id}.docx"
 
-    # Copy the source master file
     src_path = os.path.join("masters", source["filename"])
     dst_path = os.path.join("masters", new_filename)
     shutil.copy2(src_path, dst_path)
 
-    # Add to masters list
     masters.append({
         "id":          new_id,
         "name":        name,
         "description": description,
         "filename":    new_filename,
         "created_at":  datetime.now().strftime("%Y-%m-%d"),
-        "is_default":  False
+        "is_default":  False,
+        "form_type":   "static" # Ensures backward compatibility 
     })
     save_masters(masters)
     return redirect(url_for("masters_manager"))
 
-# ── Set Default Master ──
+# ── NEW ROUTE: Upload Brand New Document & Extract Variables ──
+@app.route("/masters/upload-new", methods=["POST"])
+def upload_new_master():
+    if not session.get("master_unlocked"):
+        return redirect(url_for("masters_page"))
+    
+    if 'file' not in request.files:
+        flash("No file provided.")
+        return redirect(url_for("masters_manager"))
+        
+    file = request.files['file']
+    name = request.form.get("name", "Unnamed Dynamic Master").strip()
+    description = request.form.get("description", "Uploaded via Auto-Extractor").strip()
+    
+    if file and file.filename.endswith('.docx'):
+        masters = load_masters()
+        new_id = f"master_{str(len(masters)+1).zfill(3)}"
+        safe_filename = secure_filename(f"{new_id}_{file.filename}")
+        
+        # Save file to masters folder
+        os.makedirs("masters", exist_ok=True)
+        filepath = os.path.join("masters", safe_filename)
+        file.save(filepath)
+        
+        # Trigger Variable Extraction
+        variables = extract_variables_from_docx(filepath)
+        
+        # Append to masters.json
+        masters.append({
+            "id": new_id,
+            "name": name,
+            "description": description,
+            "filename": safe_filename,
+            "created_at": datetime.now().strftime("%Y-%m-%d"),
+            "is_default": False,
+            "form_type": "dynamic",  # Crucial flag: Tells the app to build a dynamic form
+            "variables": variables
+        })
+        save_masters(masters)
+        flash(f"Master added! Extracted {len(variables)} dynamic fields.")
+        
+    return redirect(url_for("masters_manager"))
+
 @app.route("/masters/set-default/<master_id>", methods=["POST"])
 def set_default_master(master_id):
     if not session.get("master_unlocked"):
@@ -373,22 +427,34 @@ def set_default_master(master_id):
     save_masters(masters)
     return redirect(url_for("masters_manager"))
 
-# ── Delete Master ──
 @app.route("/masters/delete/<master_id>", methods=["POST"])
 def delete_master(master_id):
     if not session.get("master_unlocked"):
         return redirect(url_for("masters_page"))
+        
+    # 🔒 NEW: Secondary password check for deletion
+    confirm_password = request.form.get("confirm_password", "")
+    if not check_password(confirm_password):
+        flash("❌ Incorrect password! Deletion cancelled.")
+        return redirect(url_for("masters_manager"))
+
     masters = load_masters()
     master  = next((m for m in masters if m["id"] == master_id), None)
+    
     if master and not master.get("is_default"):
         filepath = os.path.join("masters", master["filename"])
         if os.path.exists(filepath):
-            os.remove(filepath)
+            try:
+                os.remove(filepath)
+            except OSError:
+                pass # Ignore if file was already removed manually
+                
         masters = [m for m in masters if m["id"] != master_id]
         save_masters(masters)
+        flash(f"🗑️ Master template '{master['name']}' was permanently deleted.")
+        
     return redirect(url_for("masters_manager"))
 
-# ── Download Master ──
 @app.route("/masters/download/<master_id>")
 def download_master(master_id):
     if not session.get("master_unlocked"):
@@ -402,7 +468,6 @@ def download_master(master_id):
                            download_name=f"{master['name']}.docx")
     return "Master not found", 404
 
-# ── Upload Updated Master ──
 @app.route("/masters/upload/<master_id>", methods=["POST"])
 def upload_master(master_id):
     if not session.get("master_unlocked"):
@@ -415,6 +480,45 @@ def upload_master(master_id):
             filepath = os.path.join("masters", master["filename"])
             file.save(filepath)
     return redirect(url_for("masters_manager"))
+
+# ══════════════════════════════════════
+# NEW: DYNAMIC FORM RENDERING & SUBMISSION
+# ══════════════════════════════════════
+@app.route('/dynamic-form/<master_id>')
+def dynamic_form(master_id):
+    masters = load_masters()
+    master = next((m for m in masters if m["id"] == master_id), None)
+    
+    if not master or master.get("form_type") != "dynamic":
+        return "Dynamic form not found or invalid type.", 404
+        
+    return render_template('dynamic_form.html', template=master)
+
+@app.route('/submit-dynamic', methods=['POST'])
+def submit_dynamic():
+    master_id = request.form.get("template_id")
+    masters = load_masters()
+    master = next((m for m in masters if m["id"] == master_id), None)
+    
+    if not master:
+        return "Master not found", 404
+        
+    # Build dictionary of data submitted by the user
+    data = {}
+    for var in master.get("variables", []):
+        data[var] = request.form.get(var, "")
+        
+    filepath, filename = generate_ion(os.path.join("masters", master["filename"]), data)
+    
+    save_history({
+        "filename": filename,
+        "degree": "Dynamic Generate",
+        "period": "N/A",
+        "generated_at": datetime.now().strftime("%d %b %Y, %I:%M %p"),
+        "departments_count": 0,
+        "master_used": master["name"],
+    })
+    return send_file(filepath, as_attachment=True)
 
 # ── API History ──
 @app.route("/api/history")

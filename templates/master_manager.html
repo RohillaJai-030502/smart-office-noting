@@ -74,7 +74,7 @@
         }
 
         .master-info { display: flex; flex-direction: column; gap: 4px; }
-        .master-name { font-size: 14px; font-weight: 700; color: #1a3c6e; }
+        .master-name { font-size: 14px; font-weight: 700; color: #1a3c6e; display: flex; align-items: center; }
         .master-desc { font-size: 12px; color: #666; }
         .master-meta { font-size: 11px; color: #999; }
 
@@ -82,6 +82,26 @@
             font-size: 11px;
             background: #e8f4e8;
             color: #2d7a2d;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        
+        .dynamic-badge {
+            font-size: 11px;
+            background: #e0f2fe;
+            color: #0284c7;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .static-badge {
+            font-size: 11px;
+            background: #f3f4f6;
+            color: #4b5563;
             padding: 2px 8px;
             border-radius: 10px;
             font-weight: 600;
@@ -134,7 +154,7 @@
             font-weight: 600;
         }
 
-        /* Create new master form */
+        /* Forms */
         .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; }
         label { font-size: 12px; font-weight: 600; color: #555; text-transform: uppercase; }
         input, select, textarea {
@@ -161,6 +181,18 @@
             cursor: pointer;
         }
         .btn-create:hover { background: #236023; }
+        
+        .btn-dynamic {
+            padding: 12px 24px;
+            background: #0284c7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-dynamic:hover { background: #0369a1; }
 
         .info-box {
             background: #f0f4ff;
@@ -171,6 +203,20 @@
             color: #1a3c6e;
             margin-bottom: 20px;
             line-height: 1.6;
+        }
+        
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .flash-message {
+            background: #e8f4e8;
+            color: #2d7a2d;
+            border: 1px solid #2d7a2d;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -189,7 +235,16 @@
 
 <div class="container">
 
-    <!-- Existing Masters -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash-messages">
+        {% for message in messages %}
+          <div class="flash-message">✅ {{ message }}</div>
+        {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
     <div class="card">
         <h2>📋 Existing Master Documents</h2>
 
@@ -203,14 +258,20 @@
             <div class="master-info">
                 <div class="master-name">
                     {{ master.name }}
+                    
+                    {% if master.form_type == 'dynamic' %}
+                        <span class="dynamic-badge">✨ Dynamic</span>
+                    {% else %}
+                        <span class="static-badge">📄 Static</span>
+                    {% endif %}
+                    
                     {% if master.is_default %}
-                    <span class="default-badge">✓ Default</span>
+                        <span class="default-badge">✓ Default</span>
                     {% endif %}
                 </div>
                 <div class="master-desc">{{ master.description }}</div>
                 <div class="master-meta">Created: {{ master.created_at }}</div>
 
-                <!-- Upload updated master -->
                 <div class="upload-section" id="upload-{{ master.id }}">
                     <form action="/masters/upload/{{ master.id }}" method="POST"
                           enctype="multipart/form-data">
@@ -221,29 +282,27 @@
             </div>
 
             <div class="master-actions">
-                <!-- Download -->
                 <a href="/masters/download/{{ master.id }}" class="btn-action btn-download-m">
                     📥 Download
                 </a>
 
-                <!-- Upload toggle -->
                 <button type="button" class="btn-action btn-download-m"
                         onclick="toggleUpload('{{ master.id }}')">
                     📤 Upload Edit
                 </button>
 
-                <!-- Set as default -->
                 {% if not master.is_default %}
                 <form action="/masters/set-default/{{ master.id }}" method="POST">
                     <button type="submit" class="btn-action btn-set-default">⭐ Set Default</button>
                 </form>
                 {% endif %}
 
-                <!-- Delete -->
                 {% if not master.is_default %}
-                <form action="/masters/delete/{{ master.id }}" method="POST">
-                    <button type="submit" class="btn-action btn-delete-m"
-                            onclick="return confirm('Delete {{ master.name }}? This cannot be undone.')">
+                <form id="delete-form-{{ master.id }}" action="/masters/delete/{{ master.id }}" method="POST">
+                    <input type="hidden" name="confirm_password" id="delete-pwd-{{ master.id }}" value="">
+                    
+                    <button type="button" class="btn-action btn-delete-m"
+                            onclick="promptDelete('{{ master.id }}', '{{ master.name }}')">
                         🗑 Delete
                     </button>
                 </form>
@@ -252,10 +311,32 @@
         </div>
         {% endfor %}
     </div>
+    
+    <div class="card" style="border: 2px solid #0284c7;">
+        <h2 style="color: #0284c7; border-bottom-color: #e0f2fe;">✨ Upload Dynamic Master (Code-Free)</h2>
+        <p style="font-size:13px; color:#666; margin-bottom:18px;">
+            Upload a brand new Word document (<code>.docx</code>) containing custom variables wrapped in curly braces (e.g., <b>{{employee_name}}</b> or <b>{{joining_date}}</b>). The system will automatically extract the variables and build a custom web form for it.
+        </p>
 
-    <!-- Create New Master -->
+        <form action="/masters/upload-new" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Template Name *</label>
+                <input type="text" name="name" placeholder="e.g. Employee Joining Letter" required>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <input type="text" name="description" placeholder="Brief description of this form's purpose...">
+            </div>
+            <div class="form-group">
+                <label>Upload Document (.docx) *</label>
+                <input type="file" name="file" accept=".docx" required style="padding: 6px 10px;">
+            </div>
+            <button type="submit" class="btn-dynamic">✨ Extract Variables & Create Form</button>
+        </form>
+    </div>
+
     <div class="card">
-        <h2>➕ Create New Master from Existing</h2>
+        <h2>➕ Create New Static Master (From Existing)</h2>
         <p style="font-size:13px; color:#666; margin-bottom:18px;">
             This will copy an existing master as a starting point.
             Download it, edit in Word, then upload back.
@@ -290,6 +371,22 @@
     function toggleUpload(masterId) {
         const el = document.getElementById('upload-' + masterId);
         el.classList.toggle('show');
+    }
+
+    // NEW: Double-layer security prompt for deletion
+    function promptDelete(masterId, masterName) {
+        // First Warning
+        if (confirm(`⚠️ WARNING: Are you sure you want to permanently delete the template '${masterName}'? This cannot be undone.`)) {
+            // Second Prompt: Password
+            let pwd = prompt("🔒 Please enter the Admin Password to authorize this deletion:");
+            
+            // If they entered a password (didn't hit cancel)
+            if (pwd !== null) {
+                // Insert password into hidden field and submit the form
+                document.getElementById('delete-pwd-' + masterId).value = pwd;
+                document.getElementById('delete-form-' + masterId).submit();
+            }
+        }
     }
 </script>
 

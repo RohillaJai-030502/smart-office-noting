@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fill Document: {{ template.name }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
+
+        .header {
+            background: #1a3c6e;
+            color: white;
+            padding: 18px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 20px; }
+        .header p  { font-size: 13px; opacity: 0.8; }
+
+        .btn-header {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn-header:hover { background: rgba(255,255,255,0.3); }
+
+        .container { max-width: 700px; margin: 40px auto; padding: 0 20px; }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-top: 4px solid #0284c7;
+        }
+
+        .card h2 {
+            font-size: 22px;
+            color: #1a3c6e;
+            margin-bottom: 8px;
+        }
+        
+        .card p.desc {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e8edf5;
+        }
+
+        /* Form Elements */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        
+        /* If there's an odd number of variables, make the last one span full width */
+        .form-group:last-child:nth-child(odd) {
+            grid-column: 1 / -1;
+        }
+
+        label { font-size: 13px; font-weight: 600; color: #444; text-transform: capitalize; }
+        
+        input[type="text"] {
+            padding: 12px 14px;
+            border: 1px solid #dde3ed;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #333;
+            background: #fafbfd;
+            transition: all 0.2s;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #0284c7;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+        }
+
+        .btn-submit {
+            padding: 14px 24px;
+            background: #0284c7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        .btn-submit:hover { background: #0369a1; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            background: #f8f9fc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h1>✨ Dynamic Document Generator</h1>
+        <p>Auto-generated from your Word template</p>
+    </div>
+    <div class="header-actions">
+        <a href="/" class="btn-header">← Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="card">
+        <h2>{{ template.name }}</h2>
+        <p class="desc">{{ template.description }}</p>
+
+        <form action="/submit-dynamic" method="POST">
+            <input type="hidden" name="template_id" value="{{ template.id }}">
+            
+            {% if template.variables %}
+                <div class="form-grid">
+                    {% for variable in template.variables %}
+                    <div class="form-group">
+                        <label>{{ variable.replace('_', ' ') }}</label>
+                        <input type="text" name="{{ variable }}" placeholder="Enter {{ variable.replace('_', ' ') }}" required>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="btn-submit">Generate Document 📄</button>
+            {% else %}
+                <div class="empty-state">
+                    <p>No variables (e.g., <b>{{placeholder}}</b>) were found in this master document.</p>
+                    <p style="margin-top: 10px;">Please edit the document in Word, add your {{variables}}, and upload the edit.</p>
+                </div>
+            {% endif %}
+            
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
