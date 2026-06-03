@@ -6,6 +6,7 @@ from flask import Flask, render_template, request, send_file, redirect, url_for,
 from werkzeug.utils import secure_filename
 from logic.ion_generator import generate_ion
 from logic.create_master import create_default_master
+from logic.noting_generator import generate_tbrl_noting  # NEW: TBRL Noting Generator Import
 import os
 import json
 import shutil
@@ -385,8 +386,8 @@ def upload_new_master():
         return redirect(url_for("masters_manager"))
         
     file = request.files['file']
-    name = request.form.get("name", "Unnamed Dynamic Master").strip()
-    description = request.form.get("description", "Uploaded via Auto-Extractor").strip()
+    name = request.form.get("name", "Unnamed Master").strip()
+    description = request.form.get("description", "Uploaded via Document Manager").strip()
     
     if file and file.filename.endswith('.docx'):
         masters = load_masters()
@@ -401,6 +402,14 @@ def upload_new_master():
         # Trigger Variable Extraction
         variables = extract_variables_from_docx(filepath)
         
+        # 🧠 SMART CATEGORIZATION LOGIC
+        if len(variables) > 0:
+            form_type = "dynamic"
+            flash_msg = f"✨ Dynamic Master added! Extracted {len(variables)} form fields."
+        else:
+            form_type = "static"
+            flash_msg = "🖨️ Static Template added! No variables found, saving as a printable blank document."
+        
         # Append to masters.json
         masters.append({
             "id": new_id,
@@ -409,11 +418,11 @@ def upload_new_master():
             "filename": safe_filename,
             "created_at": datetime.now().strftime("%Y-%m-%d"),
             "is_default": False,
-            "form_type": "dynamic",  # Crucial flag: Tells the app to build a dynamic form
+            "form_type": form_type,  # Now correctly assigns dynamic vs static
             "variables": variables
         })
         save_masters(masters)
-        flash(f"Master added! Extracted {len(variables)} dynamic fields.")
+        flash(flash_msg)
         
     return redirect(url_for("masters_manager"))
 
@@ -482,7 +491,7 @@ def upload_master(master_id):
     return redirect(url_for("masters_manager"))
 
 # ══════════════════════════════════════
-# NEW: DYNAMIC FORM RENDERING & SUBMISSION
+# DYNAMIC FORM RENDERING & SUBMISSION
 # ══════════════════════════════════════
 @app.route('/dynamic-form/<master_id>')
 def dynamic_form(master_id):
@@ -494,6 +503,8 @@ def dynamic_form(master_id):
         
     return render_template('dynamic_form.html', template=master)
 
+import docx # Make sure this is imported at the top of app.py
+
 @app.route('/submit-dynamic', methods=['POST'])
 def submit_dynamic():
     master_id = request.form.get("template_id")
@@ -503,21 +514,125 @@ def submit_dynamic():
     if not master:
         return "Master not found", 404
         
-    # Build dictionary of data submitted by the user
+    # 1. Grab all the user's answers from the form
     data = {}
     for var in master.get("variables", []):
         data[var] = request.form.get(var, "")
         
-    filepath, filename = generate_ion(os.path.join("masters", master["filename"]), data)
+    # 2. Open the Master Document
+    master_path = os.path.join("masters", master["filename"])
+    doc = docx.Document(master_path)
     
+    # 3. Universal Replace Function
+    def replace_text(paragraph, key, value):
+        placeholder = f"{{{{{key}}}}}" # Looks for {{variable_name}}
+        if placeholder in paragraph.text:
+            paragraph.text = paragraph.text.replace(placeholder, str(value))
+
+    # 4. Search and Replace in standard text
+    for para in doc.paragraphs:
+        for k, v in data.items():
+            replace_text(para, k, v)
+            
+    # 5. Search and Replace inside tables
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for para in cell.paragraphs:
+                    for k, v in data.items():
+                        replace_text(para, k, v)
+                        
+    # 6. Save the new generated file
+    os.makedirs("generated_notices", exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"Dynamic_{master['name'].replace(' ', '_')}_{timestamp}.docx"
+    output_path = os.path.join("generated_notices", filename)
+    doc.save(output_path)
+    
+    # 7. Add to history
     save_history({
         "filename": filename,
-        "degree": "Dynamic Generate",
+        "degree": "Dynamic Form",
         "period": "N/A",
         "generated_at": datetime.now().strftime("%d %b %Y, %I:%M %p"),
-        "departments_count": 0,
+        "departments_count": len(data),
         "master_used": master["name"],
     })
+    
+    # 8. Send to user
+    return send_file(output_path, as_attachment=True)
+
+# ══════════════════════════════════════
+# TBRL NOTING GENERATOR (NEW)
+# ══════════════════════════════════════
+@app.route("/tbrl-noting", methods=["GET"])
+def tbrl_noting():
+    defaults = load_defaults()
+    groups = ["AFTD", "ADS", "BIDS", "BEHI", "SS", "TELIC", "PPG", "QMG", "ETF", "PC", "WHD", "EXPD", "WHT&E", "ARISE", "PCD", "AIG", "RTRS", "S&D", "R&QA", "WKS", "SEED", "CERBERUS", "DPB", "HSP", "I2G", "HRDD"]
+    courses = ["C.E.P.", "Seminar", "Conference", "Workshop", "Training Course", "Program Course", "M.D.P.", "Lecture", "Symposim", "Conclave", "Meeting", "Short Term Course"]
+    
+    return render_template("tbrl_noting_form.html", defaults=defaults, groups=groups, courses=courses)
+
+@app.route("/generate-noting", methods=["POST"])
+def generate_noting():
+    # 1. Update Signatory Defaults in Memory
+    defaults = load_defaults()
+    defaults["sig1_name"] = request.form.get("sig1_name", "")
+    defaults["sig1_desig"] = request.form.get("sig1_desig", "")
+    defaults["sig2_name"] = request.form.get("sig2_name", "")
+    defaults["sig2_desig"] = request.form.get("sig2_desig", "")
+    save_json(DEFAULTS_FILE, defaults)
+
+    # 2. Extract Table Configuration & Data
+    columns = request.form.getlist("table_columns")
+    num_rows = int(request.form.get("num_rows", 1))
+    
+    nominees = []
+    for i in range(num_rows):
+        row_data = {}
+        for col in columns:
+            # Gets input named like 'Name & Design._0'
+            row_data[col] = request.form.get(f"{col}_{i}", "")
+        nominees.append(row_data)
+
+    # 3. Handle 'Other' Course Type
+    course_type = request.form.get("course_type")
+    if course_type == "Others":
+        course_type = request.form.get("custom_course_type", "Course")
+
+    # 4. Compile all data to send to noting_generator.py
+    data = {
+        "ref_no": request.form.get("ref_no"),
+        "subject_hindi": request.form.get("subject_hindi"),
+        "subject_english": request.form.get("subject_english"),
+        "reference_text": request.form.get("reference_text"),
+        "ref_date": request.form.get("ref_date"),
+        "start_date": request.form.get("start_date"),
+        "end_date": request.form.get("end_date"),
+        "org_institute": request.form.get("org_institute"),
+        "course_type": course_type,
+        "group_name": request.form.get("group_name"),
+        "sig1_name": defaults["sig1_name"],
+        "sig1_desig": defaults["sig1_desig"],
+        "sig2_name": defaults["sig2_name"],
+        "sig2_desig": defaults["sig2_desig"],
+        "columns": columns,
+        "nominees": nominees
+    }
+
+    # 5. Generate Document
+    filepath, filename = generate_tbrl_noting(data)
+    
+    # 6. Save to Dashboard History
+    save_history({
+        "filename": filename,
+        "degree": "TBRL Noting",
+        "period": f"{data.get('start_date', '')} to {data.get('end_date', '')}",
+        "generated_at": datetime.now().strftime("%d %b %Y, %I:%M %p"),
+        "departments_count": len(nominees),
+        "master_used": "TBRL Noting Master"
+    })
+    
     return send_file(filepath, as_attachment=True)
 
 # ── API History ──

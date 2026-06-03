@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Generate TBRL Noting</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+        .header {
+            background: #1a3c6e;
+            color: white;
+            padding: 18px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 { font-size: 20px; margin: 0; }
+        .btn-header {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .btn-header:hover { background: rgba(255,255,255,0.3); color: white; }
+        .card { border-radius: 10px; border-top: 4px solid #1a3c6e; box-shadow: 0 4px 8px rgba(0,0,0,0.05); margin-bottom: 25px; border-bottom: none; border-left: none; border-right: none;}
+        .section-title { font-size: 16px; font-weight: bold; color: #1a3c6e; border-bottom: 2px solid #e8edf5; padding-bottom: 8px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px;}
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .radio-group { background: #f8f9fc; padding: 12px; border-radius: 8px; border: 1px solid #dde3ed; }
+        label { font-weight: 600; font-size: 13px; color: #444; margin-bottom: 5px;}
+        .form-control, .form-select { background: #fafbfd; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h1>📄 TBRL Noting Generator</h1>
+    </div>
+    <div class="header-actions">
+        <a href="/" class="btn-header">← Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="container" style="max-width: 950px; padding-bottom: 50px;">
+    
+    <form action="/generate-noting" method="POST" id="notingForm">
+        
+        <div class="card p-4">
+            <div class="section-title">1. Reference & Subject Details</div>
+            
+            <div class="grid-2 mb-3">
+                <div>
+                    <label>File Reference No. *</label>
+                    <input type="text" name="ref_no" class="form-control" required placeholder="e.g. 101/AFTD">
+                </div>
+                <div>
+                    <label>Dated (Reference Date) *</label>
+                    <input type="text" name="ref_date" class="form-control" required placeholder="e.g. 23 Apr 2026">
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label>Reference Text (Sandarbh) *</label>
+                <input type="text" name="reference_text" class="form-control" required placeholder="e.g. ARDE/35/2/95-Tech">
+            </div>
+            
+            <div class="grid-2 mb-3">
+                <div>
+                    <label>Subject (Hindi) *</label>
+                    <input type="text" name="subject_hindi" class="form-control" required placeholder='e.g. आयुधों में प्राक्षेपिकी'>
+                </div>
+                <div>
+                    <label>Subject (English) *</label>
+                    <input type="text" name="subject_english" class="form-control" required placeholder='e.g. Ballistics in Armaments'>
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-4">
+            <div class="section-title">2. Course Information</div>
+            
+            <div class="grid-2 mb-3">
+                <div>
+                    <label>Start Date *</label>
+                    <input type="date" name="start_date" class="form-control" required>
+                </div>
+                <div>
+                    <label>End Date *</label>
+                    <input type="date" name="end_date" class="form-control" required>
+                </div>
+            </div>
+            
+            <div class="grid-2 mb-3">
+                <div>
+                    <label>Course Type *</label>
+                    <select name="course_type" class="form-select" id="course_select" onchange="checkCustomCourse()" required>
+                        {% for c in courses %}
+                        <option value="{{ c }}">{{ c }}</option>
+                        {% endfor %}
+                        <option value="Others">Others (Type Below)</option>
+                    </select>
+                    <input type="text" name="custom_course_type" id="custom_course" class="form-control mt-2" placeholder="Type custom course name..." style="display:none;">
+                </div>
+                <div>
+                    <label>Nominating Group *</label>
+                    <select name="group_name" class="form-select" required>
+                        {% for g in groups %}
+                        <option value="{{ g }}">{{ g }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label>Organizing Institute *</label>
+                <input type="text" name="org_institute" class="form-control" required placeholder="e.g. ए. आर.डी. ई. पूणे (A.R.D.E. Pune)">
+            </div>
+        </div>
+
+        <div class="card p-4">
+            <div class="section-title">3. Dynamic Nominee Table</div>
+            <p class="text-muted small mb-3">S.No., PIS n., and Name & Design. are permanently included. Select the remaining columns you need to print.</p>
+            
+            <input type="hidden" name="table_columns" value="S.N.">
+            <input type="hidden" name="table_columns" value="PIS n.">
+            <input type="hidden" name="table_columns" value="Name & Design.">
+            
+            <div class="row g-3 mb-4">
+                <div class="col-md-3 radio-group">
+                    <label class="mb-2 text-primary">Gender / Lab</label><br>
+                    <div class="form-check">
+                        <input class="form-check-input table-col-check" type="radio" name="col_group_1" value="Gen." id="r_gen" checked onchange="buildTable()">
+                        <label class="form-check-label" for="r_gen">Gen.</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input table-col-check" type="radio" name="col_group_1" value="Lab" id="r_lab" onchange="buildTable()">
+                        <label class="form-check-label" for="r_lab">Lab</label>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 radio-group">
+                    <label class="mb-2 text-primary">Topic / Title</label><br>
+                    <div class="form-check">
+                        <input class="form-check-input table-col-check" type="radio" name="col_group_2" value="DOB" id="r_dob" checked onchange="buildTable()">
+                        <label class="form-check-label" for="r_dob">DOB</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input table-col-check" type="radio" name="col_group_2" value="Course Title" id="r_ct" onchange="buildTable()">
+                        <label class="form-check-label" for="r_ct">Course Title</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input table-col-check" type="radio" name="col_group_2" value="Lecture Topic" id="r_lt" onchange="buildTable()">
+                        <label class="form-check-label" for="r_lt">Lecture Topic</label>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 radio-group">
+                    <label class="mb-2 text-primary">Venue / Qual.</label><br>
+                    <div class="form-check">
+                        <input class="form-check-input table-col-check" type="radio" name="col_group_3" value="Qualification" id="r_qual" checked onchange="buildTable()">
+                        <label class="form-check-label" for="r_qual">Qualification</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input table-col-check" type="radio" name="col_group_3" value="Venue" id="r_ven" onchange="buildTable()">
+                        <label class="form-check-label" for="r_ven">Venue</label>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 radio-group">
+                    <label class="mb-2 text-primary">Optionals</label><br>
+                    <div class="form-check">
+                        <input class="form-check-input table-col-check" type="checkbox" value="Contact No." id="c_contact" checked onchange="buildTable()">
+                        <label class="form-check-label" for="c_contact">Contact No.</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input table-col-check" type="checkbox" value="DRONA Email ID" id="c_email" onchange="buildTable()">
+                        <label class="form-check-label" for="c_email">DRONA Email ID</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input table-col-check" type="checkbox" value="Key Function Area" id="c_kfa" onchange="buildTable()">
+                        <label class="form-check-label" for="c_kfa">Key Function Area</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-end gap-3 mb-4 p-3 bg-light rounded border">
+                <div>
+                    <label class="mb-1 text-danger">Number of Nominees (Max 5)</label>
+                    <input type="number" id="num_rows" name="num_rows" class="form-control text-center" min="1" max="5" value="1" onchange="buildTable()" style="width: 100px; font-weight: bold;">
+                </div>
+                <div class="text-muted small">
+                    <br>Changing this number automatically adjusts the Hindi grammar (Singular vs Plural) in the final document!
+                </div>
+            </div>
+            
+            <div id="hidden_columns_container"></div>
+
+            <h5 class="text-primary border-bottom pb-2 mt-4">Nominee Data Entry</h5>
+            <div id="dynamic_table_area"></div>
+        </div>
+
+        <div class="card p-4">
+            <div class="section-title">4. Signatories (Auto-Saved)</div>
+            <div class="grid-2">
+                <div class="p-3 bg-light rounded border">
+                    <label class="text-primary mb-2">Right Side Signatory</label>
+                    <input type="text" name="sig1_name" class="form-control mb-2" value="{{ defaults.get('sig1_name', '') }}" placeholder="Name">
+                    <input type="text" name="sig1_desig" class="form-control" value="{{ defaults.get('sig1_desig', '') }}" placeholder="Designation">
+                </div>
+                <div class="p-3 bg-light rounded border">
+                    <label class="text-primary mb-2">Left Side Signatory</label>
+                    <input type="text" name="sig2_name" class="form-control mb-2" value="{{ defaults.get('sig2_name', '') }}" placeholder="Name">
+                    <input type="text" name="sig2_desig" class="form-control" value="{{ defaults.get('sig2_desig', '') }}" placeholder="Designation">
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100 py-3 fs-5 fw-bold shadow-sm">📄 Generate Official Noting</button>
+    </form>
+</div>
+
+<script>
+    function checkCustomCourse() {
+        const val = document.getElementById('course_select').value;
+        const customInput = document.getElementById('custom_course');
+        if (val === 'Others') {
+            customInput.style.display = 'block';
+            customInput.required = true;
+        } else {
+            customInput.style.display = 'none';
+            customInput.required = false;
+        }
+    }
+
+    function buildTable() {
+        const numRows = parseInt(document.getElementById('num_rows').value) || 1;
+        if(numRows > 5) document.getElementById('num_rows').value = 5;
+        if(numRows < 1) document.getElementById('num_rows').value = 1;
+        const safeRows = Math.min(Math.max(document.getElementById('num_rows').value, 1), 5);
+
+        // Determine which columns are active
+        const activeColumns = ['S.N.', 'PIS n.', 'Name & Design.'];
+        
+        // Add selected Radios
+        activeColumns.push(document.querySelector('input[name="col_group_1"]:checked').value);
+        activeColumns.push(document.querySelector('input[name="col_group_2"]:checked').value);
+        activeColumns.push(document.querySelector('input[name="col_group_3"]:checked').value);
+        
+        // Add selected Checkboxes
+        document.querySelectorAll('input[type="checkbox"].table-col-check:checked').forEach(cb => {
+            activeColumns.push(cb.value);
+        });
+
+        // 1. Update Hidden Inputs for Backend
+        const hiddenContainer = document.getElementById('hidden_columns_container');
+        hiddenContainer.innerHTML = '';
+        activeColumns.forEach(col => {
+            // Only add the dynamically chosen ones (the first 3 are already hardcoded in HTML)
+            if(!['S.N.', 'PIS n.', 'Name & Design.'].includes(col)){
+                hiddenContainer.innerHTML += `<input type="hidden" name="table_columns" value="${col}">`;
+            }
+        });
+
+        // 2. Build the Form Rows
+        const area = document.getElementById('dynamic_table_area');
+        let html = '';
+        
+        for (let i = 0; i < safeRows; i++) {
+            html += `<div class="p-3 mb-3 bg-white border rounded shadow-sm">
+                        <strong class="text-secondary">Nominee ${i+1}</strong>
+                        <div class="row g-2 mt-1">`;
+            
+            activeColumns.forEach(col => {
+                let val = col === 'S.N.' ? i + 1 : '';
+                let ro = col === 'S.N.' ? 'readonly' : 'required';
+                
+                // Make inputs wider for Name and Email
+                let colSize = (col === 'Name & Design.' || col === 'DRONA Email ID' || col === 'Course Title') ? 'col-md-4' : 'col-md-2';
+                if(col === 'S.N.') colSize = 'col-md-1';
+
+                html += `
+                <div class="${colSize}">
+                    <label style="font-size:11px; font-weight:bold; color:#666;">${col}</label>
+                    <input type="text" name="${col}_${i}" class="form-control form-control-sm border-secondary" value="${val}" ${ro}>
+                </div>`;
+            });
+            html += `</div></div>`;
+        }
+        area.innerHTML = html;
+    }
+    
+    // Initialize everything on page load
+    window.onload = function() {
+        checkCustomCourse();
+        buildTable();
+    };
+</script>
+
+</body>
+</html>

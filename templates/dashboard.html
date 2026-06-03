@@ -133,6 +133,7 @@
         }
         
         .action-fill { color: #2d7a2d; }
+        .action-dynamic { color: #0284c7; }
         .action-static { color: #856404; }
 
         /* History */
@@ -209,14 +210,35 @@
 
     <div class="section-title">📋 Document Catalog</div>
     <div class="cards-grid">
+        
+        <a href="/tbrl-noting" class="form-card" style="border-color: #0284c7; background: #f8fafc;">
+            <div class="card-icon" style="background: #e0f2fe;">📑</div>
+            <div class="card-title">Official TBRL Noting</div>
+            <div class="card-desc">Advanced bilingual noting generator with dynamic tables, automatic date mapping, and auto-grammar adjustment.</div>
+            <div class="card-footer">
+                <span class="category-badge">Official Document</span>
+                <span class="action-text action-dynamic">✨ Generate Noting →</span>
+            </div>
+        </a>
+
         {% for master in masters %}
-            {% if master.form_type == 'fillable' %}
+            {% if master.form_type == 'dynamic' %}
+            <a href="/dynamic-form/{{ master.id }}" class="form-card">
+                <div class="card-icon">⚡</div>
+                <div class="card-title">{{ loop.index }}. {{ master.name }}</div>
+                <div class="card-desc">{{ master.description }}</div>
+                <div class="card-footer">
+                    <span class="category-badge">{{ master.category | default('Dynamic Form', true) }}</span>
+                    <span class="action-text action-dynamic">✨ Fill Dynamic Form →</span>
+                </div>
+            </a>
+            {% elif master.form_type == 'fillable' %}
             <a href="/ion-notice" class="form-card">
                 <div class="card-icon">📝</div>
                 <div class="card-title">{{ loop.index }}. {{ master.name }}</div>
                 <div class="card-desc">{{ master.description }}</div>
                 <div class="card-footer">
-                    <span class="category-badge">{{ master.category }}</span>
+                    <span class="category-badge">{{ master.category | default('Standard Form', true) }}</span>
                     <span class="action-text action-fill">✏️ Fill Form →</span>
                 </div>
             </a>
@@ -226,7 +248,7 @@
                 <div class="card-title">{{ loop.index }}. {{ master.name }}</div>
                 <div class="card-desc">{{ master.description }}</div>
                 <div class="card-footer">
-                    <span class="category-badge">{{ master.category }}</span>
+                    <span class="category-badge">{{ master.category | default('Blank Template', true) }}</span>
                     <span class="action-text action-static">📥 Download Blank</span>
                 </div>
             </a>
@@ -262,7 +284,7 @@
                         <div class="activity-meta">
                             📅 {{ item.generated_at }} 
                             {% if item.departments_count > 0 %}
-                            &nbsp;|&nbsp; 🏢 {{ item.departments_count }} departments
+                            &nbsp;|&nbsp; 🏢 {{ item.departments_count }} entries
                             {% endif %}
                         </div>
                     </div>
