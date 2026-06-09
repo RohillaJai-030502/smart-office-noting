@@ -1,309 +1,89 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ION Generator — Dashboard</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
+{% extends 'base.html' %}
 
-        .header {
-            background: #1a3c6e;
-            color: white;
-            padding: 18px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .header h1 { font-size: 22px; }
-        .header p  { font-size: 13px; opacity: 0.8; margin-top: 3px; }
+{% block title %}Dashboard - Training Nomination & Notice Generation{% endblock %}
 
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .date-badge {
-            background: rgba(255,255,255,0.15);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-        }
-
-        .btn-master {
-            padding: 8px 16px;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.4);
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-        .btn-master:hover { background: rgba(255,255,255,0.3); }
-
-        .container { max-width: 1000px; margin: 35px auto; padding: 0 20px; }
-
-        .welcome {
-            background: white;
-            border-radius: 10px;
-            padding: 25px 30px;
-            margin-bottom: 28px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        .welcome h2 { font-size: 18px; color: #1a3c6e; margin-bottom: 5px; }
-        .welcome p  { font-size: 13px; color: #666; }
-
-        .section-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 14px;
-        }
-
-        /* Cards */
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .form-card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid transparent;
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-            border-color: #1a3c6e;
-        }
-
-        .card-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            margin-bottom: 15px;
-            background: #e8edf5;
-        }
-
-        .card-title { font-size: 16px; font-weight: 700; color: #1a3c6e; margin-bottom: 6px; }
-        .card-desc  { font-size: 12px; color: #666; line-height: 1.6; margin-bottom: 15px; flex-grow: 1; }
-
-        .card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 12px;
-            border-top: 1px solid #f0f2f5;
-        }
-
-        .category-badge {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 10px;
-            background: #f0f4ff;
-            color: #1a3c6e;
-        }
-
-        .action-text {
-            font-size: 12px;
-            font-weight: 700;
-        }
-        
-        .action-fill { color: #2d7a2d; }
-        .action-dynamic { color: #0284c7; }
-        .action-static { color: #856404; }
-
-        /* History */
-        .activity-card {
-            background: white;
-            border-radius: 10px;
-            padding: 25px 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .activity-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .activity-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #f0f2f5;
-        }
-        .activity-item:last-child { border-bottom: none; }
-
-        .activity-left { display: flex; align-items: center; gap: 12px; }
-        .activity-dot  { width: 8px; height: 8px; background: #1a3c6e; border-radius: 50%; flex-shrink: 0; }
-        .activity-info { display: flex; flex-direction: column; gap: 2px; }
-        .activity-title { font-size: 13px; font-weight: 600; color: #333; }
-        .activity-meta  { font-size: 11px; color: #888; }
-
-        .btn-redownload {
-            padding: 5px 12px;
-            background: #f0f4ff;
-            color: #1a3c6e;
-            border: 1px solid #1a3c6e;
-            border-radius: 5px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-        .btn-redownload:hover { background: #1a3c6e; color: white; }
-
-        .no-activity {
-            text-align: center;
-            color: #999;
-            font-size: 13px;
-            padding: 20px;
-        }
-    </style>
-</head>
-<body>
-
-<div class="header">
-    <div>
-        <h1>📄 Training Nomination & Notice Generation</h1>
-        <p>Organisation — HRD Division</p>
-    </div>
-    <div class="header-right">
-        <div class="date-badge" id="currentDate"></div>
-        <a href="/masters" class="btn-master">🔒 Manage Masters</a>
-    </div>
+{% block content %}
+<div class="hero">
+  <h2>Training Nomination & Notice Generation</h2>
+  <p>Welcome to the AeroForm Automatrix terminal. Select a module below to generate official notices, noting sheets, fax forms, and inter-office notes (ION) mapped to institutional standards.</p>
 </div>
 
-<div class="container">
-
-    <div class="welcome">
-        <h2>Welcome to the HR Notice Catalog 👋</h2>
-        <p>Select a form below to generate a new notice or download a blank printable template.</p>
+<div class="modules-section">
+  <h2 style="font-size: 1.4rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1.5rem;">Select Functional Module</h2>
+  
+  <div class="modules-grid">
+    <!-- Training Module Card -->
+    <div class="module-card training-card">
+      <div class="card-header-bar" style="background-color: var(--accent-gold);"></div>
+      <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; background-color: rgba(0, 45, 98, 0.1); border-radius: var(--radius-md);">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary-navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+      </div>
+      <h3>Training Module / प्रशिक्षण प्रभाग</h3>
+      <p>Initiate officer nominations, process inter-office notes (ION), create official noting sheets (Common, Lecture, Fee-related), draft nomination faxes, and write notices.</p>
+      <a href="{{ url_for('training_menu') }}" class="btn btn-primary" id="btn-enter-training" style="margin-top: auto;">Enter Training Module</a>
     </div>
 
-    <div class="section-title">📋 Document Catalog</div>
-    <div class="cards-grid">
-        
-        <a href="/tbrl-noting" class="form-card" style="border-color: #0284c7; background: #f8fafc;">
-            <div class="card-icon" style="background: #e0f2fe;">📑</div>
-            <div class="card-title">Official TBRL Noting</div>
-            <div class="card-desc">Advanced bilingual noting generator with dynamic tables, automatic date mapping, and auto-grammar adjustment.</div>
-            <div class="card-footer">
-                <span class="category-badge">Official Document</span>
-                <span class="action-text action-dynamic">✨ Generate Noting →</span>
+    <!-- Internship Module Card -->
+    <div class="module-card internship-card">
+      <div class="card-header-bar" style="background-color: var(--accent-gold);"></div>
+      <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; background-color: rgba(197, 160, 89, 0.1); border-radius: var(--radius-md);">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <h3>Internship Module / इंटर्नशिप प्रभाग</h3>
+      <p>Draft and manage student trainee nominations, process blank trainee requirement forms, and review active allocations. Fully integrated with historical masters.</p>
+      <a href="{{ url_for('internship_menu') }}" class="btn btn-secondary" style="margin-top: auto;">Enter Internship Module</a>
+    </div>
+  </div>
+</div>
+
+<div class="activity-section" style="margin-top: 3.5rem;">
+  <div class="activity-card">
+    <div class="activity-header">
+      <span style="font-size: 1.15rem; font-weight: 700; color: var(--primary-navy);">🕐 Recent Activity & Document History</span>
+      {% if history %}
+      <form action="/history/clear" method="POST">
+        <button type="submit" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-color: var(--error); color: var(--error);" onclick="return confirm('Clear all generation history?')">Clear History</button>
+      </form>
+      {% endif %}
+    </div>
+
+    {% if history %}
+      {% for item in history %}
+      <div class="activity-item">
+        <div class="activity-left">
+          <div class="activity-dot"></div>
+          <div class="activity-info">
+            <div class="activity-title">
+              {% if item.master_used %}
+                {{ item.master_used }}
+              {% else %}
+                {{ item.degree }} — {{ item.period }}
+              {% endif %}
             </div>
-        </a>
-
-        {% for master in masters %}
-            {% if master.form_type == 'dynamic' %}
-            <a href="/dynamic-form/{{ master.id }}" class="form-card">
-                <div class="card-icon">⚡</div>
-                <div class="card-title">{{ loop.index }}. {{ master.name }}</div>
-                <div class="card-desc">{{ master.description }}</div>
-                <div class="card-footer">
-                    <span class="category-badge">{{ master.category | default('Dynamic Form', true) }}</span>
-                    <span class="action-text action-dynamic">✨ Fill Dynamic Form →</span>
-                </div>
-            </a>
-            {% elif master.form_type == 'fillable' %}
-            <a href="/ion-notice" class="form-card">
-                <div class="card-icon">📝</div>
-                <div class="card-title">{{ loop.index }}. {{ master.name }}</div>
-                <div class="card-desc">{{ master.description }}</div>
-                <div class="card-footer">
-                    <span class="category-badge">{{ master.category | default('Standard Form', true) }}</span>
-                    <span class="action-text action-fill">✏️ Fill Form →</span>
-                </div>
-            </a>
-            {% else %}
-            <a href="/download-static/{{ master.id }}" class="form-card">
-                <div class="card-icon">🖨️</div>
-                <div class="card-title">{{ loop.index }}. {{ master.name }}</div>
-                <div class="card-desc">{{ master.description }}</div>
-                <div class="card-footer">
-                    <span class="category-badge">{{ master.category | default('Blank Template', true) }}</span>
-                    <span class="action-text action-static">📥 Download Blank</span>
-                </div>
-            </a>
-            {% endif %}
-        {% endfor %}
-    </div>
-
-    <div class="section-title">🕐 Recent Activity</div>
-    <div class="activity-card">
-        <div class="activity-header">
-            <span style="font-size:14px; font-weight:600; color:#1a3c6e;">Document History</span>
-            {% if history %}
-            <form action="/history/clear" method="POST">
-                <button type="submit" style="padding:5px 12px; background:white; color:#cc3333; border:1px solid #cc3333; border-radius:5px; font-size:12px; cursor:pointer;"
-                        onclick="return confirm('Clear all history?')">🗑 Clear</button>
-            </form>
-            {% endif %}
+            <div class="activity-meta">
+              📅 Generated: {{ item.generated_at }} 
+              {% if item.departments_count > 0 %}
+              &nbsp;|&nbsp; 🏢 {{ item.departments_count }} entries
+              {% endif %}
+            </div>
+          </div>
         </div>
-
-        {% if history %}
-            {% for item in history %}
-            <div class="activity-item">
-                <div class="activity-left">
-                    <div class="activity-dot"></div>
-                    <div class="activity-info">
-                        <div class="activity-title">
-                            {% if item.master_used %}
-                                {{ item.master_used }}
-                            {% else %}
-                                {{ item.degree }} — {{ item.period }}
-                            {% endif %}
-                        </div>
-                        <div class="activity-meta">
-                            📅 {{ item.generated_at }} 
-                            {% if item.departments_count > 0 %}
-                            &nbsp;|&nbsp; 🏢 {{ item.departments_count }} entries
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                <a href="/history/download/{{ item.filename }}" class="btn-redownload">📥 Download</a>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="no-activity">No documents generated or downloaded yet.</div>
-        {% endif %}
-    </div>
-
+        <a href="/history/download/{{ item.filename }}" class="btn-redownload">📥 Download</a>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.9rem;">
+        No documents generated or downloaded yet.
+      </div>
+    {% endif %}
+  </div>
 </div>
-
-<script>
-    const now = new Date();
-    document.getElementById('currentDate').textContent =
-        now.toLocaleDateString('en-IN', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-</script>
-
-</body>
-</html>
+{% endblock %}

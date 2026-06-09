@@ -1,6 +1,38 @@
 {
     "history": [
         {
+            "filename": "Fee_Noting_AFTD_20260610_040007.docx",
+            "degree": "Fee Related Noting",
+            "period": "2026-01-19 to 2026-01-24",
+            "generated_at": "10 Jun 2026, 04:00 AM",
+            "departments_count": 1,
+            "master_used": "Fee Related Noting Master"
+        },
+        {
+            "filename": "Fee_Noting_AFTD_20260610_035750.docx",
+            "degree": "Fee Related Noting",
+            "period": "2026-01-19 to 2026-01-24",
+            "generated_at": "10 Jun 2026, 03:57 AM",
+            "departments_count": 1,
+            "master_used": "Fee Related Noting Master"
+        },
+        {
+            "filename": "Lecture_Noting_AFTD_20260610_033203.docx",
+            "degree": "Lecture Noting",
+            "period": "2026-01-20 to 2026-01-22",
+            "generated_at": "10 Jun 2026, 03:32 AM",
+            "departments_count": 1,
+            "master_used": "Lecture Noting Master"
+        },
+        {
+            "filename": "TBRL_Noting_AFTD_20260610_032953.docx",
+            "degree": "TBRL Noting",
+            "period": "2026-01-20 to 2026-01-22",
+            "generated_at": "10 Jun 2026, 03:29 AM",
+            "departments_count": 1,
+            "master_used": "TBRL Noting Master"
+        },
+        {
             "filename": "master_004.docx",
             "degree": "Blank Form",
             "period": "N/A",

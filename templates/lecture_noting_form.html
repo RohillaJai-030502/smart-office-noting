@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Drafting: Common Noting - AeroForm Automatrix{% endblock %}
+{% block title %}Drafting: Lecture Noting - AeroForm Automatrix{% endblock %}
 
 {% block content %}
 <!-- Include Bootstrap to preserve layout structures, styled under DRDO variables -->
@@ -14,14 +14,14 @@
     </svg>
     Back to Sub-modules
   </a>
-  <h2>Drafting: Common Noting Sheet / सामान्य नोटिंग पत्र</h2>
-  <p style="color: var(--text-muted);">Bilingual training nomination noting generator with fully customizable nominee tables (edit, add, delete, or replace any column header).</p>
+  <h2>Drafting: Lecture Noting Sheet / व्याख्यान नोटिंग पत्र</h2>
+  <p style="color: var(--text-muted);">Bilingual lecture nomination noting generator with fully customizable speaker tables (edit, add, delete, or replace any column header).</p>
 </div>
 
 <div class="form-container" style="max-width: 1000px; padding: 3rem; background: var(--secondary-white); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">
     <div class="card-header-bar" style="background-color: var(--accent-gold); margin-top: -3rem; margin-left: -3rem; margin-right: -3rem; border-radius: var(--radius-lg) var(--radius-lg) 0 0; margin-bottom: 2rem;"></div>
 
-    <form action="/generate-noting" method="POST" id="notingForm">
+    <form action="/generate-lecture-noting" method="POST" id="notingForm">
         
         <!-- Section 1: File Reference & Subject Details -->
         <div class="card p-4 mb-4 border-0 shadow-sm" style="background-color: var(--secondary-light);">
@@ -51,7 +51,7 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label" style="font-weight: 600; color: var(--primary-navy);">Reference Date / संदर्भ तिथि <span class="text-danger">*</span></label>
-                    <input type="text" id="ref_mail_date" class="form-control" required value="26th Nov 2025" style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
+                    <input type="text" id="ref_mail_date" class="form-control" required value="26th Nov,2025" style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
                 </div>
             </div>
             <!-- Combined Reference hidden parameter -->
@@ -60,19 +60,19 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label" style="font-weight: 600; color: var(--primary-navy);">Subject (Hindi) / विषय (हिंदी) <span class="text-danger">*</span></label>
-                    <input type="text" name="subject_hindi" class="form-control" required value='7th इंटरनेशनल  कॉन्फेरेंस ऑन "इलेक्ट्रॉनिक वारफेयर ई.डब्लू.सी.आई. 2026" हेतु नामांकन।' style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
+                    <input type="text" name="subject_hindi" class="form-control" required value='\'\' रक्षा संगठन के लिए व्यवहार आधारित सुरक्षा"विषय पर व्याख्यान देने हेतु व्याख्याता के लिये नामांकन।' style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label" style="font-weight: 600; color: var(--primary-navy);">Subject (English) / विषय (अंग्रेजी) <span class="text-danger">*</span></label>
-                    <input type="text" name="subject_english" class="form-control" required value='Nomination of  7th International Conference on “Electronic Warfare EWCI 2026”' style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
+                    <input type="text" name="subject_english" class="form-control" required value='Nomination of suitable Speaker to deliver lecture For “National Based Safety for Defence Organisations”' style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
                 </div>
             </div>
         </div>
 
-        <!-- Section 2: Course Information -->
+        <!-- Section 2: Lecture & Course Details -->
         <div class="card p-4 mb-4 border-0 shadow-sm" style="background-color: var(--secondary-light);">
             <div class="section-title" style="font-weight: 700; color: var(--primary-navy); border-bottom: 2px solid var(--secondary-border); padding-bottom: 0.5rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px; font-size: 1.1rem;">
-                2. Course Information / पाठ्यक्रम की जानकारी
+                2. Lecture & Course Information / व्याख्यान व पाठ्यक्रम की जानकारी
             </div>
             
             <div class="row g-3 mb-3">
@@ -92,8 +92,13 @@
             </div>
 
             <div class="mb-3">
+                <label class="form-label" style="font-weight: 600; color: var(--primary-navy);">Lecture Title (Topic Name) / व्याख्यान का विषय <span class="text-danger">*</span></label>
+                <input type="text" name="lecture_title" class="form-control" required value="Behaviour Based Safety" placeholder="e.g. Behaviour Based Safety" style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
+            </div>
+
+            <div class="mb-3">
                 <label class="form-label" style="font-weight: 600; color: var(--primary-navy);">Course Title / पाठ्यक्रम का नाम <span class="text-danger">*</span></label>
-                <input type="text" name="course_title" class="form-control" required value='"इलेक्ट्रॉनिक वारफेयर ई.डब्लू.सी.आई. 2026 "' placeholder="e.g. &quot;Cybersecurity &amp; IT Admin&quot;" style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
+                <input type="text" name="course_title" class="form-control" required value='"इलेक्ट्रॉनिक वारफेयर ई.डब्लू.सी.आई. 2026 "' placeholder="e.g. &quot;Electronic Warfare EWCI 2026&quot;" style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
             </div>
             
             <div class="row g-3 mb-3">
@@ -106,6 +111,8 @@
                         <option value="संगोष्ठी">संगोष्ठी</option>
                         <option value="एम.डी.पी. कोर्स">एम.डी.पी. कोर्स</option>
                         <option value="सिम्पोजियम">सिम्पोजियम</option>
+                        <option value="STC">STC</option>
+                        <option value="TTC">TTC</option>
                     </select>
                 </div>
                 <div class="col-md-6">
@@ -120,14 +127,14 @@
             
             <div class="mb-3">
                 <label class="form-label" style="font-weight: 600; color: var(--primary-navy);">Organizing Institute / आयोजक संस्थान <span class="text-danger">*</span></label>
-                <input type="text" name="org_institute" class="form-control" required value="आई.आई.एस.सी.,बेंगलोरु (IISc,Bangalore,India)" placeholder="e.g., DIAT Pune" style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
+                <input type="text" name="org_institute" class="form-control" required value="आई. आई. एस. सी.,बेंगलोरु (IISc,Bangalore,India)" placeholder="e.g., IISc, Bangalore" style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
             </div>
         </div>
 
-        <!-- Section 3: Customizable Dynamic Nominee Table -->
+        <!-- Section 3: Customizable Dynamic Speaker Table -->
         <div class="card p-4 mb-4 border-0 shadow-sm" style="background-color: var(--secondary-light);">
             <div class="section-title" style="font-weight: 700; color: var(--primary-navy); border-bottom: 2px solid var(--secondary-border); padding-bottom: 0.5rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.5px; font-size: 1.1rem;">
-                3. Customizable Nominee Table / नामांकित तालिका संपादन
+                3. Customizable Speaker Table / व्याख्याता विवरण तालिका संपादन
             </div>
             <p class="text-muted small mb-3">Double-click or edit the text inside the column header boxes directly to rename them. Click "+" to add columns, and "×" to delete columns.</p>
             
@@ -146,7 +153,7 @@
 
             <!-- Backend packaging wrappers -->
             <div id="hidden_columns_container"></div>
-            <input type="hidden" name="num_rows" id="num_rows_input" value="1">
+            <input type="hidden" name="num_rows" id="num_rows_input" value="2">
 
             <div class="d-flex justify-content-between align-items-center mt-3">
                 <div class="d-flex gap-3">
@@ -156,7 +163,7 @@
                     </button>
                     <button type="button" class="btn btn-secondary" id="btn-add-row-field" style="padding: 0.5rem 1rem; font-size: 0.85rem; text-transform: none; display: flex; align-items: center; gap: 0.3rem;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        Add Nominee Row
+                        Add Speaker Row
                     </button>
                 </div>
                 
@@ -197,7 +204,7 @@
                     <polyline points="17 10 12 15 7 10"></polyline>
                     <line x1="12" y1="15" x2="12" y2="3"></line>
                 </svg>
-                Generate Noting / नोटिंग उत्पन्न करें
+                Generate Lecture Noting / नोटिंग उत्पन्न करें
             </button>
         </div>
     </form>
@@ -206,24 +213,28 @@
 
 {% block scripts %}
 <script>
-    // Initial default columns matching the Common Noting table structure
+    // Initial default columns matching the Lecture Noting table structure
     let columns = [
-        'S.N.', 'PIS n.', 'Name & Design.', 'Gen.', 'DOB', 
-        'Cont.No.', 'DRONA Email ID', 'Qualification', 'Key Function Area'
+        'S.N.', 'Name & Design.', 'Lecture Topic', 'Place & Date', 
+        'Phone No.', 'Internet & DRONA Email'
     ];
-    let nomineeRowsCount = 1; // Default start rows
+    let nomineeRowsCount = 2; // Default start rows
 
     // Pre-populate default nominee row data
     let nomineeData = [
         { 
-            'PIS n.': '2018AB1046', 
-            'Name & Design.': "Sh. Prakhar Kumar Pandey, Sc'C'", 
-            'Gen.': 'Male', 
-            'DOB': '26-MAR-1996', 
-            'Cont.No.': '7905493766', 
-            'DRONA Email ID': 'prakhar08@tbrl.chddom', 
-            'Qualification': 'B. Tech', 
-            'Key Function Area': 'High Voltage Application' 
+            'Name & Design.': "श्री एस. थलपति  राज, वैज्ञा. 'एफ'\nSh. S.Thalpathi Raj, Sc. ‘F’", 
+            'Lecture Topic': 'Behaviour Based Safety', 
+            'Place & Date': 'अए.आर.डी.ई.पूणे  /08-01-2026\nसमय :- 10:15बजे -11:15बजे', 
+            'Phone No.': '01722308116\n9216455121', 
+            'Internet & DRONA Email': 'traj@tbrl.chddom\n(I)traj@tbrl.drdo.in'
+        },
+        { 
+            'Name & Design.': "", 
+            'Lecture Topic': 'Behaviour Based Safety', 
+            'Place & Date': 'अए.आर.डी.ई.पूणे  /08-01-2026\nसमय :- 10:15बजे -11:15बजे', 
+            'Phone No.': '', 
+            'Internet & DRONA Email': ''
         }
     ];
 
@@ -317,11 +328,22 @@
                     td.textContent = i + 1;
                 } else {
                     const cellVal = (nomineeData[i] && nomineeData[i][colName]) ? nomineeData[i][colName] : '';
-                    td.innerHTML = `
-                        <input type="text" class="form-control form-control-sm border-0 nominee-cell-input" 
-                               data-row="${i}" data-col="${colName}" placeholder="${colName}" 
-                               value="${cellVal}" required style="font-size: 0.8rem; padding: 0.35rem;">
-                    `;
+                    // Use textarea for multiline inputs if they naturally contain newlines
+                    const isMultiline = cellVal.includes('\n') || colName.toLowerCase().includes('design') || colName.toLowerCase().includes('date') || colName.toLowerCase().includes('email');
+                    
+                    if (isMultiline) {
+                        td.innerHTML = `
+                            <textarea class="form-control form-control-sm border-0 nominee-cell-input" 
+                                   data-row="${i}" data-col="${colName}" placeholder="${colName}" 
+                                   required style="font-size: 0.8rem; padding: 0.35rem; resize: vertical; min-height: 50px;">${cellVal}</textarea>
+                        `;
+                    } else {
+                        td.innerHTML = `
+                            <input type="text" class="form-control form-control-sm border-0 nominee-cell-input" 
+                                   data-row="${i}" data-col="${colName}" placeholder="${colName}" 
+                                   value="${cellVal}" required style="font-size: 0.8rem; padding: 0.35rem;">
+                        `;
+                    }
                 }
                 tr.appendChild(td);
             });
@@ -363,7 +385,7 @@
         columns[index] = newName;
         
         // Update input names on cells directly to avoid redraw
-        const cellInputs = document.querySelectorAll(`input[data-col="${oldName}"]`);
+        const cellInputs = document.querySelectorAll(`input[data-col="${oldName}"], textarea[data-col="${oldName}"]`);
         cellInputs.forEach(input => {
             input.setAttribute('data-col', newName);
             input.placeholder = newName;
@@ -399,9 +421,9 @@
         nomineeData.push({});
         renderTable();
         
-        // Focus on first input in the new row
+        // Focus on first input/textarea in the new row
         setTimeout(() => {
-            const inputs = document.querySelectorAll(`input[data-row="${nomineeRowsCount-1}"]`);
+            const inputs = document.querySelectorAll(`[data-row="${nomineeRowsCount-1}"]`);
             if (inputs.length > 0) inputs[0].focus();
         }, 50);
     }

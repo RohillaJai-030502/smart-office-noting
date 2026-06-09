@@ -272,12 +272,11 @@
             <div class="master-options">
                 {% for master in masters %}
                     {% if master.form_type == 'fillable' %}
-                    <label class="master-option {% if loop.first %}selected{% endif %}"
+                    <label class="master-option {% if master.id == selected_master_id %}selected{% endif %}"
                            id="master-label-{{ loop.index }}">
                         <input type="radio" name="master_id" value="{{ master.id }}"
-                               {% if loop.first %}checked{% endif %}
-                               onchange="updateMasterSelection(this)"
-                               {% if saved and saved.master_id == master.id %}checked{% endif %}>
+                               {% if master.id == selected_master_id %}checked{% endif %}
+                               onchange="updateMasterSelection(this)">
                         📄 {{ master.name }}
                         {% if master.is_default %}<span style="color:#2d7a2d; font-size:10px;">✓ Default</span>{% endif %}
                     </label>

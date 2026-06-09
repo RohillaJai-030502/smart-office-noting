@@ -10,3 +10,6 @@ __pycache__/
 
 # Windows generated files
 Thumbs.db
+
+# Generated Notices
+generated_notices/

@@ -291,11 +291,13 @@
                     📤 Upload Edit
                 </button>
 
-                {% if not master.is_default %}
-                <form action="/masters/set-default/{{ master.id }}" method="POST">
+                <form action="/masters/toggle-default/{{ master.id }}" method="POST">
+                    {% if master.is_default %}
+                    <button type="submit" class="btn-action btn-delete-m">❌ Remove Default</button>
+                    {% else %}
                     <button type="submit" class="btn-action btn-set-default">⭐ Set Default</button>
+                    {% endif %}
                 </form>
-                {% endif %}
 
                 {% if not master.is_default %}
                 <form id="delete-form-{{ master.id }}" action="/masters/delete/{{ master.id }}" method="POST">
