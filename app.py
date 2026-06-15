@@ -609,7 +609,6 @@ def generate_noting():
     for i in range(num_rows):
         row_data = {}
         for col in columns:
-            # Gets input named like 'Name & Design._0'
             row_data[col] = request.form.get(f"{col}_{i}", "")
         nominees.append(row_data)
 
@@ -618,9 +617,25 @@ def generate_noting():
     if course_type == "Others":
         course_type = request.form.get("custom_course_type", "Course")
 
+    ref_no = request.form.get("form_no") or request.form.get("ref_no")
+    lab_name = request.form.get("lab_name", "टीबीआरएल")
+    
+    references_raw = request.form.get("references_json")
+    references = []
+    if references_raw:
+        try:
+            references = json.loads(references_raw)
+        except Exception:
+            pass
+    if not references:
+        references = [{
+            "source": ref_no or "",
+            "date": request.form.get("ref_date", "")
+        }]
+
     # 4. Compile all data to send to noting_generator.py
     data = {
-        "ref_no": request.form.get("ref_no"),
+        "ref_no": ref_no,
         "subject_hindi": request.form.get("subject_hindi"),
         "subject_english": request.form.get("subject_english"),
         "reference_text": request.form.get("reference_text"),
@@ -637,7 +652,8 @@ def generate_noting():
         "sig2_desig": defaults["sig2_desig"],
         "columns": columns,
         "nominees": nominees,
-        "lab_name": request.form.get("lab_name", "TBRL")
+        "lab_name": lab_name,
+        "references": references
     }
 
     # 5. Generate Document
@@ -690,9 +706,25 @@ def generate_lecture_noting_route():
 
     course_type = request.form.get("course_type")
     
+    ref_no = request.form.get("form_no") or request.form.get("ref_no")
+    lab_name = request.form.get("lab_name", "टीबीआरएल")
+    
+    references_raw = request.form.get("references_json")
+    references = []
+    if references_raw:
+        try:
+            references = json.loads(references_raw)
+        except Exception:
+            pass
+    if not references:
+        references = [{
+            "source": ref_no or "",
+            "date": request.form.get("ref_date", "")
+        }]
+
     # Compile all data
     data = {
-        "ref_no": request.form.get("ref_no"),
+        "ref_no": ref_no,
         "subject_hindi": request.form.get("subject_hindi"),
         "subject_english": request.form.get("subject_english"),
         "reference_text": request.form.get("reference_text"),
@@ -710,7 +742,8 @@ def generate_lecture_noting_route():
         "sig2_desig": defaults["sig2_desig"],
         "columns": columns,
         "nominees": nominees,
-        "lab_name": request.form.get("lab_name", "TBRL")
+        "lab_name": lab_name,
+        "references": references
     }
 
     # Generate Document
@@ -763,9 +796,25 @@ def generate_dgmss_noting_route():
 
     course_type = request.form.get("course_type")
     
+    ref_no = request.form.get("form_no") or request.form.get("ref_no")
+    lab_name = request.form.get("lab_name", "टीबीआरएल")
+    
+    references_raw = request.form.get("references_json")
+    references = []
+    if references_raw:
+        try:
+            references = json.loads(references_raw)
+        except Exception:
+            pass
+    if not references:
+        references = [{
+            "source": ref_no or "",
+            "date": request.form.get("ref_date", "")
+        }]
+
     # Compile all data
     data = {
-        "ref_no": request.form.get("ref_no"),
+        "ref_no": ref_no,
         "subject_hindi": request.form.get("subject_hindi"),
         "subject_english": request.form.get("subject_english"),
         "reference_text": request.form.get("reference_text"),
@@ -782,7 +831,8 @@ def generate_dgmss_noting_route():
         "sig2_desig": defaults["sig2_desig"],
         "columns": columns,
         "nominees": nominees,
-        "lab_name": request.form.get("lab_name", "TBRL")
+        "lab_name": lab_name,
+        "references": references
     }
 
     # Generate Document
@@ -834,9 +884,25 @@ def generate_fee_noting_route():
 
     course_type = request.form.get("course_type")
     
+    ref_no = request.form.get("form_no") or request.form.get("ref_no")
+    lab_name = request.form.get("lab_name", "टीबीआरएल")
+    
+    references_raw = request.form.get("references_json")
+    references = []
+    if references_raw:
+        try:
+            references = json.loads(references_raw)
+        except Exception:
+            pass
+    if not references:
+        references = [{
+            "source": ref_no or "",
+            "date": request.form.get("ref_date", "")
+        }]
+
     # Compile all data
     data = {
-        "ref_no": request.form.get("ref_no"),
+        "ref_no": ref_no,
         "subject_hindi": request.form.get("subject_hindi"),
         "subject_english": request.form.get("subject_english"),
         "reference_text": request.form.get("reference_text"),
@@ -854,7 +920,8 @@ def generate_fee_noting_route():
         "sig2_desig": defaults["sig2_desig"],
         "columns": columns,
         "nominees": nominees,
-        "lab_name": request.form.get("lab_name", "टीबीआरएल")
+        "lab_name": lab_name,
+        "references": references
     }
 
     # Generate Document
@@ -906,9 +973,25 @@ def generate_cancellation_noting_route():
 
     course_type = request.form.get("course_type")
     
+    ref_no = request.form.get("form_no") or request.form.get("ref_no")
+    lab_name = request.form.get("lab_name", "टीबीआरएल")
+    
+    references_raw = request.form.get("references_json")
+    references = []
+    if references_raw:
+        try:
+            references = json.loads(references_raw)
+        except Exception:
+            pass
+    if not references:
+        references = [{
+            "source": ref_no or "",
+            "date": request.form.get("ref_date", "")
+        }]
+
     # Compile all data
     data = {
-        "ref_no": request.form.get("ref_no"),
+        "ref_no": ref_no,
         "subject_hindi": request.form.get("subject_hindi"),
         "subject_english": request.form.get("subject_english"),
         "reference_text": request.form.get("reference_text"),
@@ -932,7 +1015,8 @@ def generate_cancellation_noting_route():
         "sig2_desig": defaults["sig2_desig"],
         "columns": columns,
         "nominees": nominees,
-        "lab_name": request.form.get("lab_name", "टीबीआरएल")
+        "lab_name": lab_name,
+        "references": references
     }
 
     # Generate Document

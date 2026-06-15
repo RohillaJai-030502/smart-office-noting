@@ -30,31 +30,48 @@
             </div>
             
             <div class="row g-3 mb-3">
-                <div class="col-md-4">
-                    <label class="form-label" style="font-weight: 600; color: var(--primary-navy);">Lab Name / प्रयोगशाला <span class="text-danger">*</span></label>
-                    <input type="text" name="lab_name" class="form-control" required value="टीबीआरएल" placeholder="e.g. टीबीआरएल" style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
+                <div class="col-md-8">
+                    <label class="form-label" style="font-weight: 600; color: var(--primary-navy);">Form No. / पत्र संख्या <span class="text-danger">*</span></label>
+                    <input type="text" name="form_no" id="form_no" class="form-control" required value="टीबीआरएल/मा.सं.वि.वि./" placeholder="e.g. टीबीआरएल/मा.सं.वि.वि./092" style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label" style="font-weight: 600; color: var(--primary-navy);">File Reference No. / फ़ाइल संदर्भ संख्या <span class="text-danger">*</span></label>
-                    <input type="text" name="ref_no" class="form-control" required value="टीबीआरएल/मा.सं.वि.वि./" placeholder="e.g. टीबीआरएल/मा.सं.वि.वि./092" style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
-                </div>
+                <input type="hidden" name="lab_name" id="lab_name_hidden" value="टीबीआरएल">
                 <div class="col-md-4">
                     <label class="form-label" style="font-weight: 600; color: var(--primary-navy);">Noting Date (Manual pen space) / दिनांक <span class="text-danger">*</span></label>
                     <input type="text" name="ref_date" class="form-control" id="ref_date" required placeholder="Leave blank for manual entry" style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
                 </div>
             </div>
             
-            <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    <label class="form-label" style="font-weight: 600; color: var(--primary-navy);">Reference Source / संदर्भ पत्र-ईमेल <span class="text-danger">*</span></label>
-                    <input type="text" id="ref_source" class="form-control" required value="DHRD/70300/TG/25-26/NIAS/C/M/01" style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
+            <!-- Dynamic References Section -->
+            <div class="mb-4">
+                <label class="form-label" style="font-weight: 700; color: var(--primary-navy); font-size: 1.05rem; border-bottom: 2px solid var(--secondary-border); padding-bottom: 0.3rem; width: 100%; display: block; margin-bottom: 1rem;">
+                    References / संदर्भ (Maximum 10)
+                </label>
+                
+                <div id="references-container">
+                    <!-- Reference 1: Auto-populated from Form No & Noting Date -->
+                    <div class="row g-2 align-items-center mb-2 bg-light p-2 rounded" style="border-left: 3px solid var(--primary-navy);">
+                        <div class="col-md-1 text-center fw-bold text-muted small">..(1)</div>
+                        <div class="col-md-7">
+                            <label class="form-label mb-1 fw-semibold text-muted small">Reference Source / संदर्भ पत्र-ईमेल</label>
+                            <input type="text" id="ref_source_1" class="form-control form-control-sm bg-white" readonly style="font-size: 0.85rem;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label mb-1 fw-semibold text-muted small">Reference Date / संदर्भ तिथि</label>
+                            <input type="text" id="ref_date_1" class="form-control form-control-sm bg-white" readonly style="font-size: 0.85rem;">
+                        </div>
+                    </div>
+                    
+                    <!-- Additional references will be added here -->
+                    <div id="additional-references-container"></div>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label" style="font-weight: 600; color: var(--primary-navy);">Reference Date / संदर्भ तिथि <span class="text-danger">*</span></label>
-                    <input type="text" id="ref_mail_date" class="form-control" required value="05/12/25" style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
-                </div>
+                
+                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="btn-add-ref" style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; font-weight: 600;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Add Reference / संदर्भ जोड़ें
+                </button>
             </div>
-            <!-- Combined Reference hidden parameters -->
+            
+            <input type="hidden" name="references_json" id="references_json">
             <input type="hidden" name="reference_text" id="reference_text_hidden">
             <input type="hidden" name="ref_mail_date" id="ref_mail_date_hidden">
             
@@ -236,6 +253,88 @@
         }
     ];
 
+    let refCount = 1;
+    const maxRefs = 10;
+
+    function addReferenceRow(sourceVal = "", dateVal = "") {
+        if (refCount >= maxRefs) {
+            alert("Maximum 10 references can be added!");
+            return;
+        }
+        
+        refCount++;
+        const container = document.getElementById('additional-references-container');
+        const row = document.createElement('div');
+        row.className = 'row g-2 align-items-center mb-2 reference-row p-2 border rounded position-relative';
+        row.id = `ref-row-${refCount}`;
+        row.innerHTML = `
+            <div class="col-md-1 text-center fw-bold text-muted small">..(${refCount})</div>
+            <div class="col-md-6">
+                <input type="text" class="form-control form-control-sm ref-source-input" placeholder="Reference Source (e.g. Received mail from...)" value="${sourceVal}" required style="font-size: 0.85rem; padding: 0.4rem;">
+            </div>
+            <div class="col-md-4">
+                <input type="text" class="form-control form-control-sm ref-date-input" placeholder="Reference Date (e.g. 05/12/25)" value="${dateVal}" required style="font-size: 0.85rem; padding: 0.4rem;">
+            </div>
+            <div class="col-md-1 text-center">
+                <button type="button" class="btn btn-link link-danger p-0" onclick="removeReferenceRow(${refCount})">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        `;
+        container.appendChild(row);
+        updateAddRefButtonState();
+    }
+    
+    window.removeReferenceRow = function(id) {
+        const row = document.getElementById(`ref-row-${id}`);
+        if (row) {
+            row.remove();
+            refCount--;
+            reindexReferenceRows();
+            updateAddRefButtonState();
+        }
+    }
+    
+    function reindexReferenceRows() {
+        const rows = document.querySelectorAll('.reference-row');
+        refCount = 1;
+        rows.forEach((row) => {
+            refCount++;
+            row.id = `ref-row-${refCount}`;
+            row.querySelector('.col-md-1').textContent = `..(${refCount})`;
+            row.querySelector('button').setAttribute('onclick', `removeReferenceRow(${refCount})`);
+        });
+    }
+    
+    function updateAddRefButtonState() {
+        const btn = document.getElementById('btn-add-ref');
+        if (refCount >= maxRefs) {
+            btn.disabled = true;
+            btn.classList.add('disabled');
+        } else {
+            btn.disabled = false;
+            btn.classList.remove('disabled');
+        }
+    }
+    
+    function updateLabName() {
+        const formNo = document.getElementById('form_no').value;
+        const parts = formNo.split('/');
+        const labName = parts[0] ? parts[0].trim() : 'टीबीआरएल';
+        document.getElementById('lab_name_hidden').value = labName;
+        
+        // Sync Reference 1 source
+        document.getElementById('ref_source_1').value = formNo;
+    }
+    
+    function updateFirstReferenceDate() {
+        const dateVal = document.getElementById('ref_date').value;
+        document.getElementById('ref_date_1').value = dateVal;
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         // Set noting date spaces with current year
         const refDate = document.getElementById('ref_date');
@@ -258,6 +357,16 @@
         // Bind events
         document.getElementById('btn-add-col-field').addEventListener('click', addColumn);
         document.getElementById('btn-add-row-field').addEventListener('click', addRow);
+        document.getElementById('form_no').addEventListener('input', updateLabName);
+        document.getElementById('ref_date').addEventListener('input', updateFirstReferenceDate);
+        document.getElementById('btn-add-ref').addEventListener('click', () => addReferenceRow());
+        
+        // Initial sync of Reference 1
+        updateLabName();
+        updateFirstReferenceDate();
+        
+        // Prefill default additional reference
+        addReferenceRow('DHRD/70300/TG/25-26/NIAS/C/M/01', '05/12/25');
         
         // Intercept form submit to package dynamic columns
         document.getElementById('notingForm').addEventListener('submit', packageSubmitData);
@@ -452,10 +561,32 @@
     function packageSubmitData(e) {
         saveInputsState();
 
-        const refSource = document.getElementById('ref_source').value.trim();
-        const refMailDate = document.getElementById('ref_mail_date').value.trim();
-        document.getElementById('reference_text_hidden').value = refSource;
-        document.getElementById('ref_mail_date_hidden').value = refMailDate;
+        const refs = [];
+        // Ref 1
+        refs.push({
+            source: document.getElementById('form_no').value.trim(),
+            date: document.getElementById('ref_date').value.trim()
+        });
+        // Add additional rows
+        const addRows = document.querySelectorAll('.reference-row');
+        addRows.forEach(row => {
+            const src = row.querySelector('.ref-source-input').value.trim();
+            const dt = row.querySelector('.ref-date-input').value.trim();
+            if (src || dt) {
+                refs.push({ source: src, date: dt });
+            }
+        });
+        document.getElementById('references_json').value = JSON.stringify(refs);
+
+        // Keep fallback support
+        const firstRefSource = refs[1] ? refs[1].source : '';
+        const firstRefDate = refs[1] ? refs[1].date : '';
+        if (document.getElementById('reference_text_hidden')) {
+            document.getElementById('reference_text_hidden').value = firstRefSource;
+        }
+        if (document.getElementById('ref_mail_date_hidden')) {
+            document.getElementById('ref_mail_date_hidden').value = firstRefDate;
+        }
 
         const hiddenContainer = document.getElementById('hidden_columns_container');
         hiddenContainer.innerHTML = '';
