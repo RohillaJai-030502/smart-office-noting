@@ -148,7 +148,9 @@ def build_nominees_table(doc, table_index, columns, nominees):
             p.paragraph_format.space_before = Pt(0)
             p.paragraph_format.space_after = Pt(0)
             
-            is_sn = col_name.lower() in sn_aliases
+            # Clean col parts (splitting by '/') to check for serial number keywords bilingually
+            clean_parts = [p.strip().lower().replace(" ", "").replace(".", "") for p in col_name.split("/")]
+            is_sn = any(p in ["sn", "sno", "slno", "crsn", "क्रसं", "क्रस"] for p in clean_parts)
             if is_sn:
                 p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 cell_value = f"{row_idx}."
@@ -174,7 +176,9 @@ def build_nominees_table(doc, table_index, columns, nominees):
         p.paragraph_format.space_before = Pt(0)
         p.paragraph_format.space_after = Pt(0)
         
-        is_sn = col_name.lower() in sn_aliases
+        # Clean col parts (splitting by '/') to check for serial number keywords bilingually
+        clean_parts = [p.strip().lower().replace(" ", "").replace(".", "") for p in col_name.split("/")]
+        is_sn = any(p in ["sn", "sno", "slno", "crsn", "क्रसं", "क्रस"] for p in clean_parts)
         if is_sn:
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             cell_value = f"{blank_row_idx}."
@@ -692,5 +696,239 @@ def generate_cancellation_noting(data):
     if table_index is not None and data.get('columns') and data.get('nominees'):
         build_nominees_table(doc, table_index, data['columns'], data['nominees'])
 
+    doc.save(output_path)
+    return output_path, filename
+
+
+def build_dynamic_fax_table(doc, table_index, columns, rows):
+    """Generates a dynamic table for fax sheets without a permanent blank row."""
+    table = doc.add_table(rows=len(rows) + 1, cols=len(columns))
+    set_table_borders(table, color="A0AEC0", sz="4")
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    
+    # Draw dynamic headers
+    hdr_cells = table.rows[0].cells
+    for col_idx, col_name in enumerate(columns):
+        cell = hdr_cells[col_idx]
+        set_cell_margins(cell, top=100, bottom=100, left=80, right=80)
+        cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+        
+        p = cell.paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(0)
+        
+        run = p.add_run(col_name)
+        run.font.bold = True
+        run.font.size = Pt(9.5)
+        
+    sn_aliases = ["s.n.", "s.no.", "sl.no.", "cr.sn.", "क्र.सं.", "क्र.स", "क्र.सं", "क्र.स."]
+    
+    # Draw dynamic data rows
+    for row_idx, row_data in enumerate(rows, start=1):
+        row_cells = table.rows[row_idx].cells
+        
+        for col_idx, col_name in enumerate(columns):
+            cell = row_cells[col_idx]
+            set_cell_margins(cell, top=60, bottom=60, left=80, right=80)
+            cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            
+            p = cell.paragraphs[0]
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
+            
+            # Clean col parts (splitting by '/') to check for serial number keywords bilingually
+            clean_parts = [p.strip().lower().replace(" ", "").replace(".", "") for p in col_name.split("/")]
+            is_sn = any(p in ["sn", "sno", "slno", "crsn", "क्रसं", "क्रस"] for p in clean_parts)
+            if is_sn:
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                cell_value = f"{row_idx}."
+            else:
+                p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                cell_value = str(row_data.get(col_name, ""))
+            
+            font_size = 8.0 if len(columns) > 7 else (8.5 if len(columns) > 5 else 9.5)
+            run = p.add_run(cell_value)
+            run.font.size = Pt(font_size)
+            
+    doc.paragraphs[table_index]._element.addnext(table._element)
+
+
+def generate_date_amendment_fax(data):
+    """Generates the Date Amendment Fax sheet from its master template."""
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    master_path = os.path.join("masters", "Date_Amendment_Fax.docx")
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"Date_Amendment_Fax_{timestamp}.docx"
+    output_path = os.path.join(OUTPUT_DIR, filename)
+    
+    shutil.copy2(master_path, output_path)
+    doc = Document(output_path)
+    
+    ref_no = data.get("ref_no", "")
+    ref_date = data.get("ref_date", "")
+    if not ref_date.strip():
+        ref_date = "  /    /2026"
+    fax_no = data.get("fax_no", "")
+    to_text = data.get("to_text", "")
+    
+    subject_hindi = data.get("subject_hindi", "")
+    subject_english = data.get("subject_english", "")
+    ref_text = data.get("ref_text", "")
+    
+    ref_to_hindi = data.get("ref_to_hindi", "")
+    ref_to_eng = data.get("ref_to_eng", "")
+    num_courses_hindi = data.get("num_courses_hindi", "तीन")
+    num_courses_eng = data.get("num_courses_eng", "three")
+    courses_plural_eng = data.get("courses_plural_eng", "Courses")
+    amended_courses_hindi = data.get("amended_courses_hindi", "एक")
+    amended_courses_eng = data.get("amended_courses_eng", "one")
+    
+    placeholders = {
+        "{{REF_NO}}": ref_no,
+        "{{REF_DATE}}": ref_date,
+        "{{FAX_NO}}": fax_no,
+        "{{SUBJECT_HINDI}}": subject_hindi,
+        "{{SUBJECT_ENGLISH}}": subject_english,
+        "{{REF_TEXT}}": ref_text,
+        "{{REF_TO_HINDI}}": ref_to_hindi,
+        "{{REF_TO_ENG}}": ref_to_eng,
+        "{{NUM_COURSES_HINDI}}": num_courses_hindi,
+        "{{NUM_COURSES_ENG}}": num_courses_eng,
+        "{{COURSES_PLURAL_ENG}}": courses_plural_eng,
+        "{{AMENDED_COURSES_HINDI}}": amended_courses_hindi,
+        "{{AMENDED_COURSES_ENG}}": amended_courses_eng,
+        "{{SIG_NAME}}": data.get("sig_name", ""),
+        "{{SIG_DESIG}}": data.get("sig_desig", ""),
+        "{{FOR_DIRECTOR}}": data.get("for_director", ""),
+    }
+    
+    table_index_for = None
+    table_index_read = None
+    
+    for i, para in enumerate(doc.paragraphs):
+        if "{{FOR_TABLE}}" in para.text:
+            table_index_for = i
+            para.text = ""
+        elif "{{READ_TABLE}}" in para.text:
+            table_index_read = i
+            para.text = ""
+        elif "{{TO_TEXT}}" in para.text:
+            para.text = ""
+            lines = to_text.split("\n")
+            for idx, line in enumerate(lines):
+                if idx > 0:
+                    para.add_run("\n")
+                r = para.add_run(line)
+                r.font.name = "Times New Roman"
+                r.font.size = Pt(10)
+        else:
+            replace_in_paragraph(para, placeholders)
+            
+    # Draw first table ("For")
+    if table_index_for is not None and data.get("for_columns") and data.get("for_rows"):
+        build_dynamic_fax_table(doc, table_index_for, data["for_columns"], data["for_rows"])
+        
+    # Draw second table ("Read")
+    if table_index_read is not None and data.get("read_columns") and data.get("read_rows"):
+        build_dynamic_fax_table(doc, table_index_read, data["read_columns"], data["read_rows"])
+        
+    doc.save(output_path)
+    return output_path, filename
+
+
+def generate_mayurpankh_erp_fax(data):
+    """Generates the Mayurpankh ERP Fax/Notice sheet from its master template."""
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    master_path = os.path.join("masters", "Mayurpankh_ERP_Notice.docx")
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"Mayurpankh_ERP_Notice_{timestamp}.docx"
+    output_path = os.path.join(OUTPUT_DIR, filename)
+    
+    shutil.copy2(master_path, output_path)
+    doc = Document(output_path)
+    
+    ref_no = data.get("ref_no", "")
+    ref_date = data.get("ref_date", "")
+    if not ref_date.strip():
+        ref_date = "  /    /2026"
+    fax_no = data.get("fax_no", "")
+    to_text = data.get("to_text", "")
+    subject_hindi = data.get("subject_hindi", "")
+    subject_english = data.get("subject_english", "")
+    ref_text = data.get("ref_text", "")
+    attn_text = data.get("attn_text", "")
+    body_hindi = data.get("body_hindi", "")
+    body_english = data.get("body_english", "")
+    confirm_text = data.get("confirm_text", "")
+    
+    placeholders = {
+        "{{REF_NO}}": ref_no,
+        "{{REF_DATE}}": ref_date,
+        "{{FAX_NO}}": fax_no,
+        "{{SUBJECT_HINDI}}": subject_hindi,
+        "{{SUBJECT_ENGLISH}}": subject_english,
+        "{{REF_TEXT}}": ref_text,
+        "{{SIG_NAME}}": data.get("sig_name", ""),
+        "{{SIG_DESIG}}": data.get("sig_desig", ""),
+        "{{FOR_DIRECTOR}}": data.get("for_director", ""),
+    }
+    
+    table_index = None
+    
+    for i, para in enumerate(doc.paragraphs):
+        if "{{NOMINEES_TABLE}}" in para.text:
+            table_index = i
+            para.text = ""
+        elif "{{TO_TEXT}}" in para.text:
+            para.text = ""
+            lines = to_text.split("\n")
+            for idx, line in enumerate(lines):
+                if idx > 0:
+                    para.add_run("\n")
+                r = para.add_run(line)
+                r.font.name = "Times New Roman"
+                r.font.size = Pt(10)
+        elif "{{ATTN_TEXT}}" in para.text:
+            para.text = ""
+            lines = attn_text.split("\n")
+            for idx, line in enumerate(lines):
+                if idx > 0:
+                    para.add_run("\n")
+                if idx == 0:
+                    lbl = para.add_run("ध्यानार्थ (Kindly Attention): ")
+                    lbl.font.name = "Times New Roman"
+                    lbl.font.bold = True
+                    lbl.font.size = Pt(10)
+                    r = para.add_run(line)
+                else:
+                    prefix = "                                                       "
+                    r = para.add_run(prefix + line)
+                r.font.name = "Times New Roman"
+                r.font.size = Pt(10)
+        elif "{{BODY_HINDI}}" in para.text:
+            para.text = ""
+            r = para.add_run(body_hindi)
+            r.font.name = "Times New Roman"
+            r.font.size = Pt(10)
+        elif "{{BODY_ENGLISH}}" in para.text:
+            para.text = ""
+            r = para.add_run(body_english)
+            r.font.name = "Times New Roman"
+            r.font.size = Pt(10)
+        elif "{{CONFIRM_TEXT}}" in para.text:
+            para.text = ""
+            r = para.add_run(confirm_text)
+            r.font.name = "Times New Roman"
+            r.font.size = Pt(10)
+        else:
+            replace_in_paragraph(para, placeholders)
+            
+    # Draw the dynamic table
+    if table_index is not None and data.get("columns") and data.get("rows"):
+        build_dynamic_fax_table(doc, table_index, data["columns"], data["rows"])
+        
     doc.save(output_path)
     return output_path, filename

@@ -116,12 +116,23 @@
             "module": "training",
             "sub_module": "fax_mail",
             "variables": [
+                "REF_NO",
+                "REF_DATE",
                 "FAX_NO",
-                "TO_NAME",
-                "SUBJECT",
-                "OLD_DATE",
-                "NEW_DATE",
-                "REF_NO"
+                "TO_TEXT",
+                "SUBJECT_HINDI",
+                "SUBJECT_ENGLISH",
+                "REF_TEXT",
+                "REF_TO_HINDI",
+                "REF_TO_ENG",
+                "NUM_COURSES_HINDI",
+                "NUM_COURSES_ENG",
+                "COURSES_PLURAL_ENG",
+                "AMENDED_COURSES_HINDI",
+                "AMENDED_COURSES_ENG",
+                "SIG_NAME",
+                "SIG_DESIG",
+                "FOR_DIRECTOR"
             ]
         },
         {
@@ -153,11 +164,20 @@
             "module": "training",
             "sub_module": "fax_mail",
             "variables": [
-                "ERP_REF",
-                "TO_DEPT",
-                "SUBJECT",
-                "INSTRUCTIONS",
-                "DATE"
+                "REF_NO",
+                "REF_DATE",
+                "FAX_NO",
+                "TO_TEXT",
+                "SUBJECT_HINDI",
+                "SUBJECT_ENGLISH",
+                "REF_TEXT",
+                "ATTN_TEXT",
+                "BODY_HINDI",
+                "BODY_ENGLISH",
+                "CONFIRM_TEXT",
+                "SIG_NAME",
+                "SIG_DESIG",
+                "FOR_DIRECTOR"
             ]
         },
         {

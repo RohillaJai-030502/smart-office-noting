@@ -122,14 +122,9 @@
                 <div class="col-md-6">
                     <label class="form-label" style="font-weight: 600; color: var(--primary-navy);">Course Type / पाठ्यक्रम का प्रकार <span class="text-danger">*</span></label>
                     <select name="course_type" class="form-select" id="course_select" required style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
-                        <option value="कॉन्फेरेंस">कॉन्फेरेंस</option>
-                        <option value="कार्यशाला">कार्यशाला</option>
-                        <option value="सी.ई.पी. कोर्स">सी.ई.पी. कोर्स</option>
-                        <option value="संगोष्ठी">संगोष्ठी</option>
-                        <option value="एम.डी.पी. कोर्स">एम.डी.पी. कोर्स</option>
-                        <option value="सिम्पोजियम">सिम्पोजियम</option>
-                        <option value="STC">STC</option>
-                        <option value="TTC">TTC</option>
+                        {% for c in courses %}
+                        <option value="{{ c.hindi }}" {% if c.hindi == "सी.ई.पी. कोर्स" %}selected{% endif %}>{{ c.hindi }} / {{ c.english }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-6">
@@ -231,27 +226,24 @@
 {% block scripts %}
 <script>
     // Initial default columns matching the Lecture Noting table structure
-    let columns = [
-        'S.N.', 'Name & Design.', 'Lecture Topic', 'Place & Date', 
-        'Phone No.', 'Internet & DRONA Email'
-    ];
+    let columns = {{ default_columns | tojson }};
     let nomineeRowsCount = 2; // Default start rows
 
     // Pre-populate default nominee row data
     let nomineeData = [
         { 
-            'Name & Design.': "श्री एस. थलपति  राज, वैज्ञा. 'एफ'\nSh. S.Thalpathi Raj, Sc. ‘F’", 
-            'Lecture Topic': 'Behaviour Based Safety', 
-            'Place & Date': 'अए.आर.डी.ई.पूणे  /08-01-2026\nसमय :- 10:15बजे -11:15बजे', 
-            'Phone No.': '01722308116\n9216455121', 
-            'Internet & DRONA Email': 'traj@tbrl.chddom\n(I)traj@tbrl.drdo.in'
+            'नाम एवं पद / Name and Design.': "श्री एस. थलपति  राज, वैज्ञा. 'एफ'\nSh. S.Thalpathi Raj, Sc. ‘F’", 
+            'व्याख्यान का विषय / Lecture Title': 'Behaviour Based Safety', 
+            'स्थान व दिनांक / Place & Date': 'अए.आर.डी.ई.पूणे  /08-01-2026\nसमय :- 10:15बजे -11:15बजे', 
+            'दूरभाष नं. / Contact No.': '01722308116\n9216455121', 
+            'इंटरनेट व द्रोणा ईमेल / Internet & DRONA Email': 'traj@tbrl.chddom\n(I)traj@tbrl.drdo.in'
         },
         { 
-            'Name & Design.': "", 
-            'Lecture Topic': 'Behaviour Based Safety', 
-            'Place & Date': 'अए.आर.डी.ई.पूणे  /08-01-2026\nसमय :- 10:15बजे -11:15बजे', 
-            'Phone No.': '', 
-            'Internet & DRONA Email': ''
+            'नाम एवं पद / Name and Design.': "", 
+            'व्याख्यान का विषय / Lecture Title': 'Behaviour Based Safety', 
+            'स्थान व दिनांक / Place & Date': 'अए.आर.डी.ई.पूणे  /08-01-2026\nसमय :- 10:15बजे -11:15बजे', 
+            'दूरभाष नं. / Contact No.': '', 
+            'इंटरनेट व द्रोणा ईमेल / Internet & DRONA Email': ''
         }
     ];
 
@@ -401,8 +393,9 @@
             const th = document.createElement('th');
             th.className = 'p-2 text-center position-relative';
             
-            if (colName === 'S.N.') {
-                th.style.width = '60px';
+            const isSnCol = colName.toLowerCase().includes('s.n.') || colName.toLowerCase().includes('s.no.') || colName.toLowerCase().includes('s. no.') || colName.includes('क्र.सं.');
+            if (isSnCol) {
+                th.style.width = '100px';
                 th.innerHTML = `<span style="font-size:0.85rem; font-weight:700;">${colName}</span>`;
             } else {
                 th.innerHTML = `
@@ -432,7 +425,8 @@
                 const td = document.createElement('td');
                 td.className = 'p-1';
                 
-                if (colName === 'S.N.') {
+                const isSnCol = colName.toLowerCase().includes('s.n.') || colName.toLowerCase().includes('s.no.') || colName.toLowerCase().includes('s. no.') || colName.includes('क्र.सं.');
+                if (isSnCol) {
                     td.className = 'p-2 text-center text-muted fw-bold';
                     td.textContent = i + 1;
                 } else {

@@ -118,13 +118,9 @@
                 <div class="col-md-6">
                     <label class="form-label" style="font-weight: 600; color: var(--primary-navy);">Course Type / पाठ्यक्रम का प्रकार <span class="text-danger">*</span></label>
                     <select name="course_type" class="form-select" id="course_select" required style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
-                        <option value="सीनियर एक्स्क्यूटिव कार्यक्रम">सीनियर एक्स्क्यूटिव कार्यक्रम</option>
-                        <option value="सी.ई.पी. कोर्स">सी.ई.पी. कोर्स</option>
-                        <option value="कार्यशाला">कार्यशाला</option>
-                        <option value="संगोष्ठी">संगोष्ठी</option>
-                        <option value="कॉन्फेरेंस">कॉन्फेरेंस</option>
-                        <option value="एम.डी.पी. कोर्स">एम.डी.पी. कोर्स</option>
-                        <option value="सिम्पोजियम">सिम्पोजियम</option>
+                        {% for c in courses %}
+                        <option value="{{ c.hindi }}" {% if c.hindi == "सी.ई.पी. कोर्स" %}selected{% endif %}>{{ c.hindi }} / {{ c.english }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-6">
@@ -226,30 +222,28 @@
 {% block scripts %}
 <script>
     // Initial default columns matching the Fee Noting table structure
-    let columns = [
-        'S.N.', 'PIS n.', 'Name & Design.', 'Course Title', 'Date', 'Qualification/DOB/Venue', 'DRONA Email ID/Cont.No', 'Key Function Area/Fee'
-    ];
+    let columns = {{ default_columns | tojson }};
     let nomineeRowsCount = 2; // Default start rows
 
     // Pre-populate default nominee row data
     let nomineeData = [
         { 
-            'PIS n.': '2018AB1046',
-            'Name & Design.': "श्री प्रखर  कुमार पांडे , वैज्ञा 'सी' /\nSh. Prakhar Kumar Pandey, Sc‘C’", 
-            'Course Title': '“Leadership in an Unpredictable World”', 
-            'Date': '19-24  जनवरी 2026', 
-            'Qualification/DOB/Venue': 'B. Tech/26-MAR-1996',
-            'DRONA Email ID/Cont.No': 'prakhar08@tbrl.chddom/ 7905493766',
-            'Key Function Area/Fee': 'High Voltage Application'
+            'पी.आई.एस. नं. / PIS No.': '2018AB1046',
+            'नाम एवं पद / Name and Design.': "श्री प्रखर  कुमार पांडे , वैज्ञा 'सी' /\nSh. Prakhar Kumar Pandey, Sc‘C’", 
+            'कोर्स का नाम / Course Title': '“Leadership in an Unpredictable World”', 
+            'दिनांक / Date': '19-24  जनवरी 2026', 
+            'योग्यता/डी.ओ.बी./स्थान / Qualification/DOB/Venue': 'B. Tech/26-MAR-1996',
+            'द्रोणा ईमेल आईडी/दूरभाष नं. / DRONA Email ID/Cont.No': 'prakhar08@tbrl.chddom/ 7905493766',
+            'कार्य का क्षेत्र/शुल्क / Key Function Area/Fee': 'High Voltage Application'
         },
         { 
-            'PIS n.': '',
-            'Name & Design.': "", 
-            'Course Title': '“Leadership in an Unpredictable World”', 
-            'Date': '19-24  जनवरी 2026', 
-            'Qualification/DOB/Venue': '',
-            'DRONA Email ID/Cont.No': '',
-            'Key Function Area/Fee': ''
+            'पी.आई.एस. नं. / PIS No.': '',
+            'नाम एवं पद / Name and Design.': "", 
+            'कोर्स का नाम / Course Title': '“Leadership in an Unpredictable World”', 
+            'दिनांक / Date': '19-24  जनवरी 2026', 
+            'योग्यता/डी.ओ.बी./स्थान / Qualification/DOB/Venue': '',
+            'द्रोणा ईमेल आईडी/दूरभाष नं. / DRONA Email ID/Cont.No': '',
+            'कार्य का क्षेत्र/शुल्क / Key Function Area/Fee': ''
         }
     ];
 
@@ -399,7 +393,8 @@
             const th = document.createElement('th');
             th.className = 'p-2 text-center position-relative';
             
-            if (colName === 'S.N.') {
+            const isSnCol = colName.toLowerCase().includes('s.n.') || colName.toLowerCase().includes('s.no.') || colName.toLowerCase().includes('s. no.') || colName.includes('क्र.सं.');
+            if (isSnCol) {
                 th.style.width = '60px';
                 th.innerHTML = `<span style="font-size:0.85rem; font-weight:700;">${colName}</span>`;
             } else {
@@ -430,12 +425,27 @@
                 const td = document.createElement('td');
                 td.className = 'p-1';
                 
-                if (colName === 'S.N.') {
+                const isSnCol = colName.toLowerCase().includes('s.n.') || colName.toLowerCase().includes('s.no.') || colName.toLowerCase().includes('s. no.') || colName.includes('क्र.सं.');
+                if (isSnCol) {
                     td.className = 'p-2 text-center text-muted fw-bold';
                     td.textContent = i + 1;
                 } else {
                     const cellVal = (nomineeData[i] && nomineeData[i][colName]) ? nomineeData[i][colName] : '';
-                    const isMultiline = cellVal.includes('\n') || colName.toLowerCase().includes('design') || colName.toLowerCase().includes('venue') || colName.toLowerCase().includes('date') || colName.toLowerCase().includes('fee') || colName.toLowerCase().includes('title') || colName.toLowerCase().includes('quali') || colName.toLowerCase().includes('email') || colName.toLowerCase().includes('cont');
+                    const colLower = colName.toLowerCase();
+                    const isMultiline = cellVal.includes('\n') || 
+                                        colLower.includes('design') || 
+                                        colLower.includes('venue') || 
+                                        colLower.includes('date') || 
+                                        colLower.includes('fee') || 
+                                        colLower.includes('title') || 
+                                        colLower.includes('quali') || 
+                                        colLower.includes('email') || 
+                                        colLower.includes('cont') || 
+                                        colLower.includes('पद') || 
+                                        colLower.includes('स्थान') || 
+                                        colLower.includes('शुल्क') || 
+                                        colLower.includes('दूरभाष') || 
+                                        colLower.includes('योग्यता');
                     
                     if (isMultiline) {
                         td.innerHTML = `

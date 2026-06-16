@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, send_file, redirect, url_for,
 from werkzeug.utils import secure_filename
 from logic.ion_generator import generate_ion
 from logic.create_master import create_default_master
-from logic.noting_generator import generate_tbrl_noting, generate_lecture_noting, generate_dgmss_noting, generate_fee_noting, generate_cancellation_noting  # NEW: TBRL Noting Generator Import
+from logic.noting_generator import generate_tbrl_noting, generate_lecture_noting, generate_dgmss_noting, generate_fee_noting, generate_cancellation_noting, generate_date_amendment_fax, generate_mayurpankh_erp_fax  # NEW: TBRL Noting/Fax/ERP Generator Import
 import os
 import json
 import shutil
@@ -61,6 +61,20 @@ def save_history(entry):
 
 def load_defaults():
     return load_json(DEFAULTS_FILE, {})
+
+def load_courses():
+    try:
+        with open("courses.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def load_columns_map():
+    try:
+        with open("columns.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
 
 def load_masters():
     return load_json(MASTERS_FILE, {"masters": []})["masters"]
@@ -587,9 +601,9 @@ def submit_dynamic():
 def tbrl_noting():
     defaults = load_defaults()
     groups = ["AFTD", "ADS", "BIDS", "BEHI", "SS", "TELIC", "PPG", "QMG", "ETF", "PC", "WHD", "EXPD", "WHT&E", "ARISE", "PCD", "AIG", "RTRS", "S&D", "R&QA", "WKS", "SEED", "CERBERUS", "DPB", "HSP", "I2G", "HRDD"]
-    courses = ["C.E.P.", "Seminar", "Conference", "Workshop", "Training Course", "Program Course", "M.D.P.", "Lecture", "Symposim", "Conclave", "Meeting", "Short Term Course"]
-    
-    return render_template("tbrl_noting_form.html", defaults=defaults, groups=groups, courses=courses)
+    courses = load_courses()
+    default_columns = load_columns_map().get("tbrl_noting", [])
+    return render_template("tbrl_noting_form.html", defaults=defaults, groups=groups, courses=courses, default_columns=default_columns)
 
 @app.route("/generate-noting", methods=["POST"])
 def generate_noting():
@@ -679,8 +693,9 @@ def generate_noting():
 def lecture_noting():
     defaults = load_defaults()
     groups = ["AFTD", "ADS", "BIDS", "BEHI", "SS", "TELIC", "PPG", "QMG", "ETF", "PC", "WHD", "EXPD", "WHT&E", "ARISE", "PCD", "AIG", "RTRS", "S&D", "R&QA", "WKS", "SEED", "CERBERUS", "DPB", "HSP", "I2G", "HRDD"]
-    courses = ["C.E.P.", "Seminar", "Conference", "Workshop", "Training Course", "Program Course", "M.D.P.", "Lecture", "Symposim", "Conclave", "Meeting", "Short Term Course", "STC", "TTC"]
-    return render_template("lecture_noting_form.html", defaults=defaults, groups=groups, courses=courses)
+    courses = load_courses()
+    default_columns = load_columns_map().get("lecture_noting", [])
+    return render_template("lecture_noting_form.html", defaults=defaults, groups=groups, courses=courses, default_columns=default_columns)
 
 
 @app.route("/generate-lecture-noting", methods=["POST"])
@@ -769,8 +784,9 @@ def generate_lecture_noting_route():
 def dgmss_noting():
     defaults = load_defaults()
     groups = ["AFTD", "ADS", "BIDS", "BEHI", "SS", "TELIC", "PPG", "QMG", "ETF", "PC", "WHD", "EXPD", "WHT&E", "ARISE", "PCD", "AIG", "RTRS", "S&D", "R&QA", "WKS", "SEED", "CERBERUS", "DPB", "HSP", "I2G", "HRDD", "BTS"]
-    courses = ["C.E.P.", "Seminar", "Conference", "Workshop", "Training Course", "Program Course", "M.D.P.", "Lecture", "Symposim", "Conclave", "Meeting", "Short Term Course", "STC", "TTC", "शॉर्ट ट्र्म फॉरेन ट्रेनिंग कार्यक्रम"]
-    return render_template("dgmss_noting_form.html", defaults=defaults, groups=groups, courses=courses)
+    courses = load_courses()
+    default_columns = load_columns_map().get("dgmss_noting", [])
+    return render_template("dgmss_noting_form.html", defaults=defaults, groups=groups, courses=courses, default_columns=default_columns)
 
 
 @app.route("/generate-dgmss-noting", methods=["POST"])
@@ -857,8 +873,9 @@ def generate_dgmss_noting_route():
 def fee_noting():
     defaults = load_defaults()
     groups = ["AFTD", "ADS", "BIDS", "BEHI", "SS", "TELIC", "PPG", "QMG", "ETF", "PC", "WHD", "EXPD", "WHT&E", "ARISE", "PCD", "AIG", "RTRS", "S&D", "R&QA", "WKS", "SEED", "CERBERUS", "DPB", "HSP", "I2G", "HRDD", "BTS"]
-    courses = ["C.E.P.", "Seminar", "Conference", "Workshop", "Training Course", "Program Course", "M.D.P.", "Lecture", "Symposim", "Conclave", "Meeting", "Short Term Course", "STC", "TTC", "सीनियर एक्स्क्यूटिव कार्यक्रम"]
-    return render_template("fee_noting_form.html", defaults=defaults, groups=groups, courses=courses)
+    courses = load_courses()
+    default_columns = load_columns_map().get("fee_noting", [])
+    return render_template("fee_noting_form.html", defaults=defaults, groups=groups, courses=courses, default_columns=default_columns)
 
 
 @app.route("/generate-fee-noting", methods=["POST"])
@@ -946,8 +963,9 @@ def generate_fee_noting_route():
 def cancellation_noting():
     defaults = load_defaults()
     groups = ["AFTD", "ADS", "BIDS", "BEHI", "SS", "TELIC", "PPG", "QMG", "ETF", "PC", "WHD", "EXPD", "WHT&E", "ARISE", "PCD", "AIG", "RTRS", "S&D", "R&QA", "WKS", "SEED", "CERBERUS", "DPB", "HSP", "I2G", "HRDD", "BTS"]
-    courses = ["C.E.P.", "Seminar", "Conference", "Workshop", "Training Course", "Program Course", "M.D.P.", "Lecture", "Symposim", "Conclave", "Meeting", "Short Term Course", "STC", "TTC", "सीनियर एक्स्क्यूटिव कार्यक्रम", "कॉन्फेरेंस"]
-    return render_template("cancellation_noting_form.html", defaults=defaults, groups=groups, courses=courses)
+    courses = load_courses()
+    default_columns = load_columns_map().get("cancellation_noting", [])
+    return render_template("cancellation_noting_form.html", defaults=defaults, groups=groups, courses=courses, default_columns=default_columns)
 
 
 @app.route("/generate-cancellation-noting", methods=["POST"])
@@ -1032,6 +1050,138 @@ def generate_cancellation_noting_route():
         "master_used": "Nomination Cancellation Master"
     })
     
+    return send_file(filepath, as_attachment=True)
+
+
+# DATE AMENDMENT FAX GENERATOR
+# ═════════════════════════════
+@app.route("/date-amendment-fax", methods=["GET"])
+def date_amendment_fax():
+    defaults = load_defaults()
+    courses = load_courses()
+    default_columns = load_columns_map().get("date_amendment_fax", [])
+    return render_template("date_amendment_fax_form.html", defaults=defaults, courses=courses, default_columns=default_columns)
+
+
+@app.route("/generate-date-amendment-fax", methods=["POST"])
+def generate_date_amendment_fax_route():
+    # 1. Extract Table Configuration & Data
+    for_columns = request.form.getlist("for_columns")
+    read_columns = request.form.getlist("read_columns")
+    for_rows_count = int(request.form.get("for_rows_count", 1))
+    read_rows_count = int(request.form.get("read_rows_count", 1))
+
+    for_rows = []
+    for i in range(for_rows_count):
+        row_data = {}
+        for col in for_columns:
+            row_data[col] = request.form.get(f"for_{col}_{i}", "")
+        for_rows.append(row_data)
+
+    read_rows = []
+    for i in range(read_rows_count):
+        row_data = {}
+        for col in read_columns:
+            row_data[col] = request.form.get(f"read_{col}_{i}", "")
+        read_rows.append(row_data)
+
+    # 2. Assemble document payload
+    data = {
+        "ref_no": request.form.get("ref_no", ""),
+        "fax_no": request.form.get("fax_no", ""),
+        "ref_date": request.form.get("ref_date", ""),
+        "to_text": request.form.get("to_text", ""),
+        "subject_hindi": request.form.get("subject_hindi", ""),
+        "subject_english": request.form.get("subject_english", ""),
+        "ref_text": request.form.get("ref_text", ""),
+        "ref_to_hindi": request.form.get("ref_to_hindi", ""),
+        "ref_to_eng": request.form.get("ref_to_eng", ""),
+        "num_courses_hindi": request.form.get("num_courses_hindi", "तीन"),
+        "num_courses_eng": request.form.get("num_courses_eng", "three"),
+        "courses_plural_eng": request.form.get("courses_plural_eng", "Courses"),
+        "amended_courses_hindi": request.form.get("amended_courses_hindi", "एक"),
+        "amended_courses_eng": request.form.get("amended_courses_eng", "one"),
+        "for_columns": for_columns,
+        "for_rows": for_rows,
+        "read_columns": read_columns,
+        "read_rows": read_rows,
+        "sig_name": request.form.get("sig_name", ""),
+        "sig_desig": request.form.get("sig_desig", ""),
+        "for_director": request.form.get("for_director", "")
+    }
+
+    # Generate Fax document
+    filepath, filename = generate_date_amendment_fax(data)
+
+    # Save to dashboard history
+    save_history({
+        "filename": filename,
+        "degree": f"Date Amendment Fax ({request.form.get('course_type_select', 'C.E.P.')})",
+        "period": "N/A",
+        "generated_at": datetime.now().strftime("%d %b %Y, %I:%M %p"),
+        "departments_count": for_rows_count,
+        "master_used": "Date Amendment Fax Master"
+    })
+
+    return send_file(filepath, as_attachment=True)
+
+
+# MAYURPANKH ERP FAX GENERATOR
+# ═════════════════════════════
+@app.route("/mayurpankh-erp", methods=["GET"])
+def mayurpankh_erp():
+    defaults = load_defaults()
+    courses = load_courses()
+    default_columns = load_columns_map().get("mayurpankh_erp", [])
+    return render_template("mayurpankh_erp_form.html", defaults=defaults, courses=courses, default_columns=default_columns)
+
+
+@app.route("/generate-mayurpankh-erp-fax", methods=["POST"])
+def generate_mayurpankh_erp_fax_route():
+    # 1. Extract Table Configuration & Data
+    columns = request.form.getlist("columns")
+    rows_count = int(request.form.get("rows_count", 1))
+
+    rows = []
+    for i in range(rows_count):
+        row_data = {}
+        for col in columns:
+            row_data[col] = request.form.get(f"{col}_{i}", "")
+        rows.append(row_data)
+
+    # 2. Assemble document payload
+    data = {
+        "ref_no": request.form.get("ref_no", ""),
+        "fax_no": request.form.get("fax_no", ""),
+        "ref_date": request.form.get("ref_date", ""),
+        "to_text": request.form.get("to_text", ""),
+        "subject_hindi": request.form.get("subject_hindi", ""),
+        "subject_english": request.form.get("subject_english", ""),
+        "ref_text": request.form.get("ref_text", ""),
+        "attn_text": request.form.get("attn_text", ""),
+        "body_hindi": request.form.get("body_hindi", ""),
+        "body_english": request.form.get("body_english", ""),
+        "confirm_text": request.form.get("confirm_text", ""),
+        "columns": columns,
+        "rows": rows,
+        "sig_name": request.form.get("sig_name", ""),
+        "sig_desig": request.form.get("sig_desig", ""),
+        "for_director": request.form.get("for_director", "")
+    }
+
+    # Generate Fax document
+    filepath, filename = generate_mayurpankh_erp_fax(data)
+
+    # Save to dashboard history
+    save_history({
+        "filename": filename,
+        "degree": "Mayurpankh ERP Fax",
+        "period": "N/A",
+        "generated_at": datetime.now().strftime("%d %b %Y, %I:%M %p"),
+        "departments_count": rows_count,
+        "master_used": "Mayurpankh ERP Fax Master"
+    })
+
     return send_file(filepath, as_attachment=True)
 
 

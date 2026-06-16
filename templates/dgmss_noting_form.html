@@ -117,10 +117,9 @@
                 <div class="col-md-6">
                     <label class="form-label" style="font-weight: 600; color: var(--primary-navy);">Course Type / पाठ्यक्रम का प्रकार <span class="text-danger">*</span></label>
                     <select name="course_type" class="form-select" id="course_select" required style="padding: 0.6rem; border: 1px solid var(--secondary-border);">
-                        <option value="शॉर्ट ट्र्म फॉरेन ट्रेनिंग कार्यक्रम">शॉर्ट ट्र्म फॉरेन ट्रेनिंग कार्यक्रम</option>
-                        <option value="फॉरेन ट्रेनिंग कोर्स">फॉरेन ट्रेनिंग कोर्स</option>
-                        <option value="कार्यशाला">कार्यशाला</option>
-                        <option value="संगोष्ठी">संगोष्ठी</option>
+                        {% for c in courses %}
+                        <option value="{{ c.hindi }}" {% if c.hindi == "सी.ई.पी. कोर्स" %}selected{% endif %}>{{ c.hindi }} / {{ c.english }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-6">
@@ -222,26 +221,24 @@
 {% block scripts %}
 <script>
     // Initial default columns matching the DGMSS Noting table structure
-    let columns = [
-        'S.N.', 'Name & Design.', 'Course Title', 'Venue', 'Date', 'Fee'
-    ];
+    let columns = {{ default_columns | tojson }};
     let nomineeRowsCount = 2; // Default start rows
 
     // Pre-populate default nominee row data
     let nomineeData = [
         { 
-            'Name & Design.': "श्री अंकुर त्रिगुनायक, वैज्ञा. 'ई’/\nSh. Ankur Trigunayak, Sc ‘E’", 
-            'Course Title': 'Short Term Foreign training Programme on “Penetration Mechanics”', 
-            'Venue': 'SWRI,\nSan Antonio, Texas', 
-            'Date': '02-06\n मार्च\n2026', 
-            'Fee': '$3,300/-प्रति प्रतिभागी/(Or Equivalent Indian rupee)'
+            'नाम एवं पद / Name and Design.': "श्री अंकुर त्रिगुनायक, वैज्ञा. 'ई’/\nSh. Ankur Trigunayak, Sc ‘E’", 
+            'कोर्स का नाम / Course Title': 'Short Term Foreign training Programme on “Penetration Mechanics”', 
+            'स्थान / Place/Venue': 'SWRI,\nSan Antonio, Texas', 
+            'दिनांक / Date': '02-06\n मार्च\n2026', 
+            'शुल्क / Fee': '$3,300/-प्रति प्रतिभागी/(Or Equivalent Indian rupee)'
         },
         { 
-            'Name & Design.': "", 
-            'Course Title': 'Short Term Foreign training Programme on “Penetration Mechanics”', 
-            'Venue': 'SWRI,\nSan Antonio, Texas', 
-            'Date': '02-06\n मार्च\n2026', 
-            'Fee': '$3,300/-प्रति प्रतिभागी/(Or Equivalent Indian rupee)'
+            'नाम एवं पद / Name and Design.': "", 
+            'कोर्स का नाम / Course Title': 'Short Term Foreign training Programme on “Penetration Mechanics”', 
+            'स्थान / Place/Venue': 'SWRI,\nSan Antonio, Texas', 
+            'दिनांक / Date': '02-06\n मार्च\n2026', 
+            'शुल्क / Fee': '$3,300/-प्रति प्रतिभागी/(Or Equivalent Indian rupee)'
         }
     ];
 
@@ -391,7 +388,8 @@
             const th = document.createElement('th');
             th.className = 'p-2 text-center position-relative';
             
-            if (colName === 'S.N.') {
+            const isSnCol = colName.toLowerCase().includes('s.n.') || colName.toLowerCase().includes('s.no.') || colName.toLowerCase().includes('s. no.') || colName.includes('क्र.सं.');
+            if (isSnCol) {
                 th.style.width = '60px';
                 th.innerHTML = `<span style="font-size:0.85rem; font-weight:700;">${colName}</span>`;
             } else {
@@ -422,12 +420,22 @@
                 const td = document.createElement('td');
                 td.className = 'p-1';
                 
-                if (colName === 'S.N.') {
+                const isSnCol = colName.toLowerCase().includes('s.n.') || colName.toLowerCase().includes('s.no.') || colName.toLowerCase().includes('s. no.') || colName.includes('क्र.सं.');
+                if (isSnCol) {
                     td.className = 'p-2 text-center text-muted fw-bold';
                     td.textContent = i + 1;
                 } else {
                     const cellVal = (nomineeData[i] && nomineeData[i][colName]) ? nomineeData[i][colName] : '';
-                    const isMultiline = cellVal.includes('\n') || colName.toLowerCase().includes('design') || colName.toLowerCase().includes('venue') || colName.toLowerCase().includes('date') || colName.toLowerCase().includes('fee') || colName.toLowerCase().includes('title');
+                    const colLower = colName.toLowerCase();
+                    const isMultiline = cellVal.includes('\n') || 
+                                        colLower.includes('design') || 
+                                        colLower.includes('venue') || 
+                                        colLower.includes('date') || 
+                                        colLower.includes('fee') || 
+                                        colLower.includes('title') || 
+                                        colLower.includes('पद') || 
+                                        colLower.includes('स्थान') || 
+                                        colLower.includes('शुल्क');
                     
                     if (isMultiline) {
                         td.innerHTML = `
