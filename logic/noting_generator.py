@@ -5,6 +5,7 @@ from docx.enum.table import WD_TABLE_ALIGNMENT, WD_ALIGN_VERTICAL
 from docx.oxml.ns import qn, nsdecls
 from docx.oxml import OxmlElement, parse_xml
 import os
+import json
 import shutil
 from datetime import datetime
 
@@ -927,8 +928,164 @@ def generate_mayurpankh_erp_fax(data):
             replace_in_paragraph(para, placeholders)
             
     # Draw the dynamic table
+    # Draw the dynamic table
     if table_index is not None and data.get("columns") and data.get("rows"):
         build_dynamic_fax_table(doc, table_index, data["columns"], data["rows"])
         
+    doc.save(output_path)
+    return output_path, filename
+
+
+def generate_appraisal_proforma(data):
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    template_path = os.path.join(base_dir, "masters", "Appraisal_Proforma_Master.docx")
+    
+    if not os.path.exists(template_path):
+        raise FileNotFoundError(f"Template not found at: {template_path}")
+        
+    doc = Document(template_path)
+    
+    # Placeholders mapping
+    placeholders = {
+        "STUDENT_NAME_HINDI": data.get("student_name_hindi", ""),
+        "FATHER_NAME_HINDI": data.get("father_name_hindi", ""),
+        "STUDENT_NAME_ENG": data.get("student_name_eng", ""),
+        "FATHER_NAME_ENG": data.get("father_name_eng", ""),
+        "BRANCH_SEMESTER": data.get("branch_semester", ""),
+        "MOBILE_NO": data.get("mobile_no", ""),
+        "INSTITUTE_NAME": data.get("institute_name", ""),
+        "GROUP_NAME": data.get("group_name", ""),
+        "GROUP_DIRECTOR": data.get("group_director", ""),
+        "DIV_HEAD_COORDINATOR": data.get("div_head_coordinator", ""),
+        "PROJECT_TITLE": data.get("project_title", ""),
+        "WORK_DESCRIPTION": data.get("work_description", ""),
+        "DATE_OF_JOINING": data.get("date_of_joining", ""),
+        "DATE_OF_COMPLETION": data.get("date_of_completion", ""),
+        "ATTENDANCE_GRADE": data.get("attendance_grade", ""),
+        "PERFORMANCE_RATING": data.get("performance_rating", ""),
+        "REPORT_SUBMITTED": data.get("report_submitted", ""),
+        "REMARKS": data.get("remarks", ""),
+        "RECOMMENDATION": data.get("recommendation", "")
+    }
+    
+    # We replace placeholders inside paragraphs
+    for para in doc.paragraphs:
+        for key, val in placeholders.items():
+            placeholder = f"{{{{{key}}}}}"
+            if placeholder in para.text:
+                # If placeholder is in one run, replace it there
+                replaced = False
+                for run in para.runs:
+                    if placeholder in run.text:
+                        run.text = run.text.replace(placeholder, str(val))
+                        replaced = True
+                # Fallback to paragraph-level replace
+                if not replaced:
+                    para.text = para.text.replace(placeholder, str(val))
+                    
+    # Save the output file
+    output_dir = os.path.join(base_dir, "generated_notices")
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Format a filename
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    clean_name = data.get("student_name_eng", "Trainee").replace(" ", "_")
+    filename = f"Appraisal_Proforma_{clean_name}_{timestamp}.docx"
+    output_path = os.path.join(output_dir, filename)
+    
+    doc.save(output_path)
+    return output_path, filename
+
+
+def generate_coordinator_nomination(master_id, data):
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    # We load the masters list to find the template filename
+    masters_file = os.path.join(base_dir, "masters.json")
+    with open(masters_file, "r", encoding="utf-8") as f:
+        masters = json.load(f)["masters"]
+        
+    master = next((m for m in masters if m["id"] == master_id), None)
+    if not master:
+        raise ValueError(f"Master template with ID {master_id} not found!")
+        
+    template_path = os.path.join(base_dir, "masters", master["filename"])
+    doc = Document(template_path)
+    
+    placeholders = {
+        "TRAINING_SESSION": data.get("training_session", ""),
+        "REF_NO": data.get("ref_no", ""),
+        "DATE": data.get("date", ""),
+        "SIGNATORY_NAME": data.get("signatory_name", ""),
+        "SIGNATORY_DESIG": data.get("signatory_desig", ""),
+        "RECIPIENT_GROUP": data.get("recipient_group", "")
+    }
+    
+    # 1. Replace paragraph placeholders
+    for para in doc.paragraphs:
+        for key, val in placeholders.items():
+            placeholder = f"{{{{{key}}}}}"
+            if placeholder in para.text:
+                para.text = para.text.replace(placeholder, str(val))
+                
+    # 2. Populate Table 0 (Trainees List)
+    trainees = data.get("trainees", [])
+    
+    if len(doc.tables) >= 2:
+        table_0 = doc.tables[0]
+        # Preserve header (Row 0) and remove all other rows
+        while len(table_0.rows) > 1:
+            table_0._tbl.remove(table_0.rows[1]._tr)
+            
+        for idx, t in enumerate(trainees):
+            row_cells = table_0.add_row().cells
+            row_cells[0].text = f"{idx+1}."
+            row_cells[1].text = t.get("name", "")
+            row_cells[2].text = t.get("father_name", "")
+            row_cells[3].text = t.get("branch", "")
+            row_cells[4].text = t.get("group", "")
+            
+            # Format text in table_0 cells
+            for col_idx, cell in enumerate(row_cells):
+                for p in cell.paragraphs:
+                    p.paragraph_format.space_before = Pt(2)
+                    p.paragraph_format.space_after = Pt(2)
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER if col_idx in [0, 4] else WD_ALIGN_PARAGRAPH.LEFT
+                    for run in p.runs:
+                        run.font.name = "Times New Roman"
+                        run.font.size = Pt(10)
+                        
+        # 3. Populate Table 1 (Coordinator Details)
+        table_1 = doc.tables[1]
+        # Preserve header (Row 0) and remove all other rows
+        while len(table_1.rows) > 1:
+            table_1._tbl.remove(table_1.rows[1]._tr)
+            
+        for idx, t in enumerate(trainees):
+            row_cells = table_1.add_row().cells
+            row_cells[0].text = f"{idx+1}."
+            row_cells[1].text = t.get("name", "")
+            row_cells[2].text = "" # Blank for coordinator to fill
+            row_cells[3].text = "" # Blank for coordinator to fill
+            row_cells[4].text = "" # Blank for coordinator to fill
+            
+            # Format text in table_1 cells
+            for col_idx, cell in enumerate(row_cells):
+                for p in cell.paragraphs:
+                    p.paragraph_format.space_before = Pt(2)
+                    p.paragraph_format.space_after = Pt(2)
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER if col_idx == 0 else WD_ALIGN_PARAGRAPH.LEFT
+                    for run in p.runs:
+                        run.font.name = "Times New Roman"
+                        run.font.size = Pt(10)
+                        
+    output_dir = os.path.join(base_dir, "generated_notices")
+    os.makedirs(output_dir, exist_ok=True)
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    clean_name = master["name"].replace(" ", "_").replace("/", "_")
+    filename = f"{clean_name}_{timestamp}.docx"
+    output_path = os.path.join(output_dir, filename)
     doc.save(output_path)
     return output_path, filename

@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, send_file, redirect, url_for,
 from werkzeug.utils import secure_filename
 from logic.ion_generator import generate_ion
 from logic.create_master import create_default_master
-from logic.noting_generator import generate_tbrl_noting, generate_lecture_noting, generate_dgmss_noting, generate_fee_noting, generate_cancellation_noting, generate_date_amendment_fax, generate_mayurpankh_erp_fax  # NEW: TBRL Noting/Fax/ERP Generator Import
+from logic.noting_generator import generate_tbrl_noting, generate_lecture_noting, generate_dgmss_noting, generate_fee_noting, generate_cancellation_noting, generate_date_amendment_fax, generate_mayurpankh_erp_fax, generate_appraisal_proforma, generate_coordinator_nomination  # NEW: TBRL Noting/Fax/ERP Generator Import
 import os
 import json
 import shutil
@@ -554,12 +554,16 @@ def submit_dynamic():
     master_path = os.path.join("masters", master["filename"])
     doc = docx.Document(master_path)
     
-    # 3. Universal Run-Level Replace Function
     def replace_text(paragraph, key, value):
         placeholder = f"{{{{{key}}}}}" # Looks for {{variable_name}}
-        for run in paragraph.runs:
-            if placeholder in run.text:
-                run.text = run.text.replace(placeholder, str(value))
+        if placeholder in paragraph.text:
+            replaced = False
+            for run in paragraph.runs:
+                if placeholder in run.text:
+                    run.text = run.text.replace(placeholder, str(value))
+                    replaced = True
+            if not replaced:
+                paragraph.text = paragraph.text.replace(placeholder, str(value))
 
     # 4. Search and Replace in standard text
     for para in doc.paragraphs:
@@ -577,7 +581,8 @@ def submit_dynamic():
     # 6. Save the new generated file
     os.makedirs("generated_notices", exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"Dynamic_{master['name'].replace(' ', '_')}_{timestamp}.docx"
+    clean_name = master['name'].replace(' ', '_').replace('/', '_').replace('\\', '_')
+    filename = f"Dynamic_{clean_name}_{timestamp}.docx"
     output_path = os.path.join("generated_notices", filename)
     doc.save(output_path)
     
@@ -1180,6 +1185,105 @@ def generate_mayurpankh_erp_fax_route():
         "generated_at": datetime.now().strftime("%d %b %Y, %I:%M %p"),
         "departments_count": rows_count,
         "master_used": "Mayurpankh ERP Fax Master"
+    })
+
+    return send_file(filepath, as_attachment=True)
+
+
+# APPRAISAL PROFORMA GENERATOR
+# ══════════════════════════════════════
+@app.route("/appraisal-proforma", methods=["GET"])
+def appraisal_proforma():
+    defaults = load_defaults()
+    groups = ["AFTD", "ADS", "BIDS", "BEHI", "SS", "TELIC", "PPG", "QMG", "ETF", "PC", "WHD", "EXPD", "WHT&E", "ARISE", "PCD", "AIG", "RTRS", "S&D", "R&QA", "WKS", "SEED", "CERBERUS", "DPB", "HSP", "I2G", "HRDD", "BTS"]
+    return render_template("appraisal_form.html", defaults=defaults, groups=groups)
+
+
+@app.route("/generate-appraisal-proforma", methods=["POST"])
+def generate_appraisal_proforma_route():
+    data = {
+        "student_name_hindi":   request.form.get("student_name_hindi", ""),
+        "father_name_hindi":    request.form.get("father_name_hindi", ""),
+        "student_name_eng":     request.form.get("student_name_eng", ""),
+        "father_name_eng":      request.form.get("father_name_eng", ""),
+        "branch_semester":      request.form.get("branch_semester", ""),
+        "mobile_no":            request.form.get("mobile_no", ""),
+        "institute_name":       request.form.get("institute_name", ""),
+        "group_name":           request.form.get("group_name", ""),
+        "group_director":       request.form.get("group_director", ""),
+        "div_head_coordinator": request.form.get("div_head_coordinator", ""),
+        "project_title":        request.form.get("project_title", ""),
+        "work_description":     request.form.get("work_description", ""),
+        "date_of_joining":      request.form.get("date_of_joining", ""),
+        "date_of_completion":   request.form.get("date_of_completion", ""),
+        "attendance_grade":     request.form.get("attendance_grade", ""),
+        "performance_rating":   request.form.get("performance_rating", ""),
+        "report_submitted":     request.form.get("report_submitted", ""),
+        "remarks":              request.form.get("remarks", ""),
+        "recommendation":       request.form.get("recommendation", "")
+    }
+
+    filepath, filename = generate_appraisal_proforma(data)
+
+    save_history({
+        "filename":          filename,
+        "degree":            data["branch_semester"],
+        "period":            f"{data['date_of_joining']} to {data['date_of_completion']}",
+        "generated_at":      datetime.now().strftime("%d %b %Y, %I:%M %p"),
+        "departments_count": 1,
+        "master_used":       "Appraisal Proforma Master"
+    })
+
+    return send_file(filepath, as_attachment=True)
+
+
+# COORDINATOR NOMINATION GENERATOR
+# ══════════════════════════════════════
+@app.route("/coordinator-nomination/<master_id>", methods=["GET"])
+def coordinator_nomination(master_id):
+    defaults = load_defaults()
+    masters = load_masters()
+    master = next((m for m in masters if m["id"] == master_id), None)
+    if not master:
+        flash(f"Master template {master_id} not found.")
+        return redirect(url_for("internship_menu"))
+        
+    groups = ["AFTD", "ADS", "BIDS", "BEHI", "SS", "TELIC", "PPG", "QMG", "ETF", "PC", "WHD", "EXPD", "WHT&E", "ARISE", "PCD", "AIG", "RTRS", "S&D", "R&QA", "WKS", "SEED", "CERBERUS", "DPB", "HSP", "I2G", "HRDD", "BTS"]
+    return render_template("coordinator_nomination_form.html", defaults=defaults, groups=groups, master=master)
+
+
+@app.route("/generate-coordinator-nomination/<master_id>", methods=["POST"])
+def generate_coordinator_nomination_route(master_id):
+    masters = load_masters()
+    master = next((m for m in masters if m["id"] == master_id), None)
+    if not master:
+        return "Master not found", 404
+        
+    trainees_json = request.form.get("trainees_json", "[]")
+    try:
+        trainees = json.loads(trainees_json)
+    except Exception:
+        trainees = []
+
+    data = {
+        "training_session": request.form.get("training_session", ""),
+        "ref_no":           request.form.get("ref_no", ""),
+        "date":             request.form.get("date", ""),
+        "signatory_name":   request.form.get("signatory_name", ""),
+        "signatory_desig":  request.form.get("signatory_desig", ""),
+        "recipient_group":  request.form.get("recipient_group", ""),
+        "trainees":         trainees
+    }
+
+    filepath, filename = generate_coordinator_nomination(master_id, data)
+
+    save_history({
+        "filename":          filename,
+        "degree":            f"Selected Trainees ({len(trainees)})",
+        "period":            data["training_session"],
+        "generated_at":      datetime.now().strftime("%d %b %Y, %I:%M %p"),
+        "departments_count": len(trainees),
+        "master_used":       master["name"]
     })
 
     return send_file(filepath, as_attachment=True)

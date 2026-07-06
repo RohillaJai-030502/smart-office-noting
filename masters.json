@@ -230,6 +230,124 @@
             "form_type": "static",
             "module": "internship",
             "sub_module": "general"
+        },
+        {
+            "id": "master_003",
+            "name": "Appraisal Proforma / मूल्यांकन प्रपत्र",
+            "description": "Appraisal Proforma for B.Tech/B.E. industrial trainees at TBRL Chandigarh.",
+            "filename": "Appraisal_Proforma_Master.docx",
+            "created_at": "2026-07-03",
+            "is_default": true,
+            "form_type": "dynamic",
+            "module": "internship",
+            "sub_module": "general",
+            "variables": [
+                "STUDENT_NAME_HINDI",
+                "FATHER_NAME_HINDI",
+                "STUDENT_NAME_ENG",
+                "FATHER_NAME_ENG",
+                "BRANCH_SEMESTER",
+                "MOBILE_NO",
+                "INSTITUTE_NAME",
+                "GROUP_NAME",
+                "GROUP_DIRECTOR",
+                "DIV_HEAD_COORDINATOR",
+                "PROJECT_TITLE",
+                "WORK_DESCRIPTION",
+                "DATE_OF_JOINING",
+                "DATE_OF_COMPLETION",
+                "ATTENDANCE_GRADE",
+                "PERFORMANCE_RATING",
+                "REPORT_SUBMITTED",
+                "REMARKS",
+                "RECOMMENDATION"
+            ]
+        },
+        {
+            "id": "master_004",
+            "name": "ION Requirement of Training Students / प्रशिक्षु आवश्यकता आमंत्रण नोट",
+            "description": "Bilingual Inter-Office Note inviting scientists to submit trainee requirements for the next session.",
+            "filename": "ION_Requirement_Training_Students_Master.docx",
+            "created_at": "2026-07-07",
+            "is_default": true,
+            "form_type": "dynamic",
+            "module": "internship",
+            "sub_module": "general",
+            "variables": [
+                "INTERNSHIP_DURATION",
+                "SESSION_MONTHS_HINDI",
+                "SUBMISSION_DEADLINE_HINDI",
+                "SESSION_PERIOD_ENG",
+                "SUBMISSION_DEADLINE_ENG",
+                "REF_NO",
+                "DATE",
+                "SIGNATORY_NAME",
+                "SIGNATORY_DESIG"
+            ]
+        },
+        {
+            "id": "master_005",
+            "name": "Nomination of Project Coordinator / परियोजना समन्वयक नामांकन",
+            "description": "ION requesting technically designated scientists to nominate coordinators for industrial training.",
+            "filename": "Nomination_Project_Coordinator_Master.docx",
+            "created_at": "2026-07-07",
+            "is_default": true,
+            "form_type": "dynamic",
+            "module": "internship",
+            "sub_module": "general",
+            "variables": [
+                "TRAINING_SESSION",
+                "REF_NO",
+                "DATE",
+                "SIGNATORY_NAME",
+                "SIGNATORY_DESIG",
+                "RECIPIENT_GROUP"
+            ]
+        },
+        {
+            "id": "master_006",
+            "name": "HRDD Intimation of Trainee Details / प्रशिक्षु विवरण एवं समन्वयक आमंत्रण",
+            "description": "ION detailing student allocations under the Paid Internship Scheme and requesting coordinator nominations.",
+            "filename": "HRDD_Intimation_Project_Coordinator_Trainee_Master.docx",
+            "created_at": "2026-07-07",
+            "is_default": true,
+            "form_type": "dynamic",
+            "module": "internship",
+            "sub_module": "general",
+            "variables": [
+                "TRAINING_SESSION",
+                "REF_NO",
+                "DATE",
+                "SIGNATORY_NAME",
+                "SIGNATORY_DESIG",
+                "RECIPIENT_GROUP"
+            ]
+        },
+        {
+            "id": "master_007",
+            "name": "Provisional Certificate / अनंतिम प्रमाण पत्र",
+            "description": "Provisional certificate for B.Tech/B.E. trainees verifying current internship status for academic requirements.",
+            "filename": "Provisional_Certificate_Master.docx",
+            "created_at": "2026-07-07",
+            "is_default": true,
+            "form_type": "dynamic",
+            "module": "internship",
+            "sub_module": "general",
+            "variables": [
+                "STUDENT_NAME",
+                "FATHER_NAME",
+                "DEGREE",
+                "BRANCH",
+                "COLLEGE_NAME",
+                "SESSION_PERIOD",
+                "PROJECT_TITLE",
+                "GUIDE_NAME",
+                "GUIDE_GRADE",
+                "REF_NO",
+                "DATE",
+                "SIGNATORY_NAME",
+                "SIGNATORY_DESIG"
+            ]
         }
     ]
 }
