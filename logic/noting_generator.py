@@ -968,20 +968,30 @@ def generate_appraisal_proforma(data):
         "RECOMMENDATION": data.get("recommendation", "")
     }
     
-    # We replace placeholders inside paragraphs
-    for para in doc.paragraphs:
-        for key, val in placeholders.items():
-            placeholder = f"{{{{{key}}}}}"
-            if placeholder in para.text:
-                # If placeholder is in one run, replace it there
-                replaced = False
-                for run in para.runs:
-                    if placeholder in run.text:
-                        run.text = run.text.replace(placeholder, str(val))
-                        replaced = True
-                # Fallback to paragraph-level replace
-                if not replaced:
-                    para.text = para.text.replace(placeholder, str(val))
+    # Helper to replace placeholders in a collection of paragraphs
+    def replace_placeholders(paragraphs, ph_map):
+        for para in paragraphs:
+            for key, val in ph_map.items():
+                placeholder = f"{{{{{key}}}}}"
+                if placeholder in para.text:
+                    # If placeholder is in one run, replace it there
+                    replaced = False
+                    for run in para.runs:
+                        if placeholder in run.text:
+                            run.text = run.text.replace(placeholder, str(val))
+                            replaced = True
+                    # Fallback to paragraph-level replace
+                    if not replaced:
+                        para.text = para.text.replace(placeholder, str(val))
+
+    # Replace in standard paragraphs
+    replace_placeholders(doc.paragraphs, placeholders)
+    
+    # Replace inside tables
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                replace_placeholders(cell.paragraphs, placeholders)
                     
     # Save the output file
     output_dir = os.path.join(base_dir, "generated_notices")
