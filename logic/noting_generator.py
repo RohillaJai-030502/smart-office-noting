@@ -1099,3 +1099,152 @@ def generate_coordinator_nomination(master_id, data):
     output_path = os.path.join(output_dir, filename)
     doc.save(output_path)
     return output_path, filename
+
+
+def generate_internship_noting(master_id, data):
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    # We load the masters list to find the template filename
+    masters_file = os.path.join(base_dir, "masters.json")
+    with open(masters_file, "r", encoding="utf-8") as f:
+        masters = json.load(f)["masters"]
+        
+    master = next((m for m in masters if m["id"] == master_id), None)
+    if not master:
+        raise ValueError(f"Master template with ID {master_id} not found!")
+        
+    template_path = os.path.join(base_dir, "masters", master["filename"])
+    doc = Document(template_path)
+    
+    # 1. Standard variable replacements
+    placeholders = {}
+    for var in master.get("variables", []):
+        placeholders[var] = data.get(var.lower(), "")
+        
+    # Helper to replace placeholders in a collection of paragraphs
+    def replace_placeholders(paragraphs, ph_map):
+        for para in paragraphs:
+            for key, val in ph_map.items():
+                placeholder = f"{{{{{key}}}}}"
+                if placeholder in para.text:
+                    # If placeholder is in one run, replace it there
+                    replaced = False
+                    for run in para.runs:
+                        if placeholder in run.text:
+                            run.text = run.text.replace(placeholder, str(val))
+                            replaced = True
+                    # Fallback to paragraph-level replace
+                    if not replaced:
+                        para.text = para.text.replace(placeholder, str(val))
+
+    # Replace in standard paragraphs
+    replace_placeholders(doc.paragraphs, placeholders)
+    
+    # Replace in tables first
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                replace_placeholders(cell.paragraphs, placeholders)
+                
+    # 2. Populate dynamic tables
+    rows_data = data.get("rows", [])
+    
+    if master_id == "master_008" and len(doc.tables) >= 2:
+        # Table 0: S.No, Trainee Name, Branch, Group, Bank Details, Remarks
+        table_0 = doc.tables[0]
+        while len(table_0.rows) > 1:
+            table_0._tbl.remove(table_0.rows[1]._tr)
+        for idx, r in enumerate(rows_data):
+            row_cells = table_0.add_row().cells
+            row_cells[0].text = f"{idx+1}"
+            row_cells[1].text = r.get("name", "")
+            row_cells[2].text = r.get("branch", "")
+            row_cells[3].text = r.get("group", "")
+            row_cells[4].text = r.get("bank_details", "")
+            row_cells[5].text = r.get("remarks", "")
+            
+            for c_idx, cell in enumerate(row_cells):
+                for p in cell.paragraphs:
+                    p.paragraph_format.space_before = Pt(2)
+                    p.paragraph_format.space_after = Pt(2)
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER if c_idx in [0, 3] else WD_ALIGN_PARAGRAPH.LEFT
+                    for run in p.runs:
+                        run.font.name = "Times New Roman"
+                        run.font.size = Pt(10)
+                        
+        # Table 1: S.No, Trainee Name, Month 1, Month 2, Month 3
+        table_1 = doc.tables[1]
+        while len(table_1.rows) > 1:
+            table_1._tbl.remove(table_1.rows[1]._tr)
+        for idx, r in enumerate(rows_data):
+            row_cells = table_1.add_row().cells
+            row_cells[0].text = f"{idx+1}"
+            row_cells[1].text = r.get("name", "")
+            row_cells[2].text = "" # blank for coordinator to fill
+            row_cells[3].text = ""
+            row_cells[4].text = ""
+            
+            for c_idx, cell in enumerate(row_cells):
+                for p in cell.paragraphs:
+                    p.paragraph_format.space_before = Pt(2)
+                    p.paragraph_format.space_after = Pt(2)
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER if c_idx == 0 else WD_ALIGN_PARAGRAPH.LEFT
+                    for run in p.runs:
+                        run.font.name = "Times New Roman"
+                        run.font.size = Pt(10)
+                        
+    elif master_id == "master_009" and len(doc.tables) >= 1:
+        # Table 0: S.No, Branch, Requirement, Application Received, Remarks
+        table_0 = doc.tables[0]
+        while len(table_0.rows) > 1:
+            table_0._tbl.remove(table_0.rows[1]._tr)
+        for idx, r in enumerate(rows_data):
+            row_cells = table_0.add_row().cells
+            row_cells[0].text = r.get("sno", f"{idx+1}")
+            row_cells[1].text = r.get("branch", "")
+            row_cells[2].text = r.get("requirement", "")
+            row_cells[3].text = r.get("applications_received", "")
+            row_cells[4].text = r.get("remarks", "")
+            
+            for c_idx, cell in enumerate(row_cells):
+                for p in cell.paragraphs:
+                    p.paragraph_format.space_before = Pt(2)
+                    p.paragraph_format.space_after = Pt(2)
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER if c_idx in [0, 2, 3] else WD_ALIGN_PARAGRAPH.LEFT
+                    for run in p.runs:
+                        run.font.name = "Times New Roman"
+                        run.font.size = Pt(10)
+                        
+    elif master_id == "master_011" and len(doc.tables) >= 1:
+        # Table 0: S.No, Trainee Name, Branch, College, Duration, Remarks
+        table_0 = doc.tables[0]
+        while len(table_0.rows) > 1:
+            table_0._tbl.remove(table_0.rows[1]._tr)
+        for idx, r in enumerate(rows_data):
+            row_cells = table_0.add_row().cells
+            row_cells[0].text = f"{idx+1}"
+            row_cells[1].text = r.get("name", "")
+            row_cells[2].text = r.get("branch", "")
+            row_cells[3].text = r.get("college", "")
+            row_cells[4].text = r.get("duration", "")
+            row_cells[5].text = r.get("remarks", "")
+            
+            for c_idx, cell in enumerate(row_cells):
+                for p in cell.paragraphs:
+                    p.paragraph_format.space_before = Pt(2)
+                    p.paragraph_format.space_after = Pt(2)
+                    p.alignment = WD_ALIGN_PARAGRAPH.CENTER if c_idx in [0, 4] else WD_ALIGN_PARAGRAPH.LEFT
+                    for run in p.runs:
+                        run.font.name = "Times New Roman"
+                        run.font.size = Pt(10)
+                        
+    # Save the output file
+    output_dir = os.path.join(base_dir, "generated_notices")
+    os.makedirs(output_dir, exist_ok=True)
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    clean_name = master["name"].replace(" ", "_").replace("/", "_")
+    filename = f"{clean_name}_{timestamp}.docx"
+    output_path = os.path.join(output_dir, filename)
+    doc.save(output_path)
+    return output_path, filename

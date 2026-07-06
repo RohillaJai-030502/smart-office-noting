@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, send_file, redirect, url_for,
 from werkzeug.utils import secure_filename
 from logic.ion_generator import generate_ion
 from logic.create_master import create_default_master
-from logic.noting_generator import generate_tbrl_noting, generate_lecture_noting, generate_dgmss_noting, generate_fee_noting, generate_cancellation_noting, generate_date_amendment_fax, generate_mayurpankh_erp_fax, generate_appraisal_proforma, generate_coordinator_nomination  # NEW: TBRL Noting/Fax/ERP Generator Import
+from logic.noting_generator import generate_tbrl_noting, generate_lecture_noting, generate_dgmss_noting, generate_fee_noting, generate_cancellation_noting, generate_date_amendment_fax, generate_mayurpankh_erp_fax, generate_appraisal_proforma, generate_coordinator_nomination, generate_internship_noting  # NEW: TBRL Noting/Fax/ERP Generator Import
 import os
 import json
 import shutil
@@ -1283,6 +1283,52 @@ def generate_coordinator_nomination_route(master_id):
         "period":            data["training_session"],
         "generated_at":      datetime.now().strftime("%d %b %Y, %I:%M %p"),
         "departments_count": len(trainees),
+        "master_used":       master["name"]
+    })
+
+    return send_file(filepath, as_attachment=True)
+
+
+# INTERNSHIP NOTING GENERATOR (NEW MULTI-TABLE ROUTE)
+# ══════════════════════════════════════
+@app.route("/internship-noting/<master_id>", methods=["GET"])
+def internship_noting(master_id):
+    defaults = load_defaults()
+    masters = load_masters()
+    master = next((m for m in masters if m["id"] == master_id), None)
+    if not master:
+        flash(f"Master template {master_id} not found.")
+        return redirect(url_for("internship_menu"))
+        
+    groups = ["AFTD", "ADS", "BIDS", "BEHI", "SS", "TELIC", "PPG", "QMG", "ETF", "PC", "WHD", "EXPD", "WHT&E", "ARISE", "PCD", "AIG", "RTRS", "S&D", "R&QA", "WKS", "SEED", "CERBERUS", "DPB", "HSP", "I2G", "HRDD", "BTS"]
+    return render_template("internship_grid_form.html", defaults=defaults, groups=groups, master=master)
+
+
+@app.route("/generate-internship-noting/<master_id>", methods=["POST"])
+def generate_internship_noting_route(master_id):
+    masters = load_masters()
+    master = next((m for m in masters if m["id"] == master_id), None)
+    if not master:
+        return "Master not found", 404
+        
+    rows_json = request.form.get("rows_json", "[]")
+    try:
+        rows = json.loads(rows_json)
+    except Exception:
+        rows = []
+
+    data = {"rows": rows}
+    for var in master.get("variables", []):
+        data[var.lower()] = request.form.get(var, "")
+
+    filepath, filename = generate_internship_noting(master_id, data)
+
+    save_history({
+        "filename":          filename,
+        "degree":            f"Dynamic Grid ({len(rows)} rows)",
+        "period":            data.get("date", "N/A"),
+        "generated_at":      datetime.now().strftime("%d %b %Y, %I:%M %p"),
+        "departments_count": len(rows),
         "master_used":       master["name"]
     })
 

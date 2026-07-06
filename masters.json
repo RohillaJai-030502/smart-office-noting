@@ -348,6 +348,106 @@
                 "SIGNATORY_NAME",
                 "SIGNATORY_DESIG"
             ]
+        },
+        {
+            "id": "master_008",
+            "name": "Payment of Stipend to Interns / पेड इंटर्नशिप स्टाइपेंड भुगतान",
+            "description": "Noting sheet authorizing monthly stipend payments to interns under the Paid Internship Scheme.",
+            "filename": "Stipend_Payment_Paid_Internship_Master.docx",
+            "created_at": "2026-07-07",
+            "is_default": true,
+            "form_type": "dynamic",
+            "module": "internship",
+            "sub_module": "general",
+            "variables": [
+                "REF_NO",
+                "DATE",
+                "STIPEND_RATE",
+                "MONTH_1",
+                "MONTH_2",
+                "MONTH_3",
+                "SIGNATORY_NAME",
+                "SIGNATORY_DESIG"
+            ]
+        },
+        {
+            "id": "master_009",
+            "name": "Paid Internship Scheme Approval / पेड इंटर्नशिप योजना अनुमोदन",
+            "description": "Noting sheet for selection approval and review panel summary of applications.",
+            "filename": "Paid_Internship_Scheme_DRDO_Master.docx",
+            "created_at": "2026-07-07",
+            "is_default": true,
+            "form_type": "dynamic",
+            "module": "internship",
+            "sub_module": "general",
+            "variables": [
+                "REF_NO",
+                "DATE",
+                "INTERNSHIP_DURATION",
+                "SESSION_START_YEAR",
+                "SIGNATORY_NAME",
+                "SIGNATORY_DESIG"
+            ]
+        },
+        {
+            "id": "master_010",
+            "name": "Date Revision of Intimation / सूचना तिथि में संशोधन",
+            "description": "Noting sheet requesting extension/revision of date for student notification under Paid Internship Scheme.",
+            "filename": "Date_Revision_Intimation_Internship_Master.docx",
+            "created_at": "2026-07-07",
+            "is_default": true,
+            "form_type": "dynamic",
+            "module": "internship",
+            "sub_module": "general",
+            "variables": [
+                "REF_NO",
+                "DATE",
+                "ORIGINAL_DEADLINE",
+                "FOR_VALUE",
+                "READ_VALUE",
+                "SIGNATORY_NAME",
+                "SIGNATORY_DESIG"
+            ]
+        },
+        {
+            "id": "master_011",
+            "name": "Student Information Noting / प्रशिक्षु सूचना नोटिंग",
+            "description": "Noting sheet summarizing student nomination applications received for training.",
+            "filename": "Student_Information_Master.docx",
+            "created_at": "2026-07-07",
+            "is_default": true,
+            "form_type": "dynamic",
+            "module": "internship",
+            "sub_module": "general",
+            "variables": [
+                "REF_NO",
+                "DATE",
+                "SIGNATORY_NAME",
+                "SIGNATORY_DESIG"
+            ]
+        },
+        {
+            "id": "master_012",
+            "name": "Visit of Faculty Mentor / फैकल्टी मेंटर विजिट",
+            "description": "Noting sheet seeking approval for mentor academic progress review visit.",
+            "filename": "Visit_Faculty_Mentor_Master.docx",
+            "created_at": "2026-07-07",
+            "is_default": true,
+            "form_type": "dynamic",
+            "module": "internship",
+            "sub_module": "general",
+            "variables": [
+                "REF_NO",
+                "DATE",
+                "MENTOR_EMAIL",
+                "EMAIL_DATE",
+                "COLLEGE_NAME",
+                "TRAINING_PERIOD",
+                "MENTOR_NAME_DESIG",
+                "VISIT_DATE",
+                "SIGNATORY_NAME",
+                "SIGNATORY_DESIG"
+            ]
         }
     ]
 }
