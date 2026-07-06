@@ -3,8 +3,8 @@
 {% block title %}Fill Document: {{ template.name }} - AeroForm Automatrix{% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 2rem;">
-  <a href="{{ url_for('training_menu') }}" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--primary-navy); font-weight: 600; font-size: 0.9rem; margin-bottom: 1rem; transition: var(--transition-fast);">
+<div style="margin-bottom: 1.5rem;">
+  <a href="{{ url_for('training_menu') if template.module == 'training' else url_for('internship_menu') }}" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--primary-navy); font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; transition: var(--transition-fast);">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <line x1="19" y1="12" x2="5" y2="12"></line>
       <polyline points="12 19 5 12 12 5"></polyline>
@@ -12,60 +12,119 @@
     Back to Sub-modules
   </a>
   <h2>Drafting: {{ template.name }}</h2>
-  <p style="color: var(--text-muted);">{{ template.description }}</p>
 </div>
 
-<div class="form-container">
-  <div class="card-header-bar" style="background-color: var(--accent-gold); margin-top: -3rem; margin-left: -3rem; margin-right: -3rem; border-radius: var(--radius-lg) var(--radius-lg) 0 0;"></div>
+<div class="preview-layout-container">
   
-  <form id="template-generation-form" action="/submit-dynamic" method="POST">
-    <input type="hidden" name="template_id" value="{{ template.id }}">
+  <!-- LEFT PANEL: The form input -->
+  <div class="form-side">
+    <div class="form-container" style="max-width: 100%; padding: 2rem; margin: 0;">
+      <div class="card-header-bar" style="background-color: var(--accent-gold); margin-top: -2rem; margin-left: -2rem; margin-right: -2rem; border-radius: var(--radius-lg) var(--radius-lg) 0 0;"></div>
+      
+      <form id="template-generation-form" action="/submit-dynamic" method="POST">
+        <input type="hidden" name="template_id" id="template_id" value="{{ template.id }}">
 
-    <h3 style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--secondary-border); padding-bottom: 0.5rem; font-size: 1.15rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary-navy);">
-      Template Variable Entry / फ़ील्ड प्रविष्टि
-    </h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 2px solid var(--secondary-border); padding-bottom: 0.4rem;">
+          <h3 style="font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--primary-navy); margin: 0;">
+            Template Variable Entry / फ़ील्ड प्रविष्टि
+          </h3>
+          <label class="translit-toggle">
+            <input type="checkbox" id="auto-translit-check" checked>
+            Auto-Transliterate to Hindi
+          </label>
+        </div>
 
-    {% if template.variables %}
-      <div class="form-grid">
-        {% for variable in template.variables %}
-          <div class="form-group {% if 'text' in variable.lower() or 'message' in variable.lower() or 'summary' in variable.lower() %}full-width{% endif %}">
-            <label for="{{ variable }}">{{ variable.replace('_', ' ') }}</label>
-            
-            {% if 'date' in variable.lower() %}
-              <input type="date" id="{{ variable }}" name="{{ variable }}" required>
-            {% elif 'text' in variable.lower() or 'message' in variable.lower() or 'summary' in variable.lower() %}
-              <textarea id="{{ variable }}" name="{{ variable }}" placeholder="Enter {{ variable.replace('_', ' ') }}..." required></textarea>
-            {% else %}
-              <input type="text" id="{{ variable }}" name="{{ variable }}" placeholder="Enter {{ variable.replace('_', ' ') }}..." required>
-            {% endif %}
+        {% if template.variables %}
+          <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 0;">
+            {% for variable in template.variables %}
+              <div class="form-group {% if 'text' in variable.lower() or 'message' in variable.lower() or 'summary' in variable.lower() or 'body' in variable.lower() or 'subject' in variable.lower() %}full-width{% endif %}">
+                <label for="{{ variable }}">{{ variable.replace('_', ' ') }}</label>
+                
+                {% if 'date' in variable.lower() %}
+                  <input type="date" id="{{ variable }}" name="{{ variable }}" required>
+                {% elif 'text' in variable.lower() or 'message' in variable.lower() or 'summary' in variable.lower() or 'body' in variable.lower() or 'subject' in variable.lower() %}
+                  <textarea id="{{ variable }}" name="{{ variable }}" placeholder="Enter {{ variable.replace('_', ' ') }}..." style="height: 60px;" required></textarea>
+                {% else %}
+                  <input type="text" id="{{ variable }}" name="{{ variable }}" placeholder="Enter {{ variable.replace('_', ' ') }}..." required>
+                {% endif %}
+              </div>
+            {% endfor %}
           </div>
-        {% endfor %}
+          
+          <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+            <a href="{{ url_for('training_menu') if template.module == 'training' else url_for('internship_menu') }}" class="btn btn-secondary" style="padding: 0.6rem 1.2rem; font-size: 0.85rem;">Cancel</a>
+            <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.2rem; font-size: 0.85rem;">
+              Generate Document / दस्तावेज़ बनाएँ
+            </button>
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 3rem; color: var(--text-muted); border: 1px dashed var(--secondary-border); border-radius: var(--radius-md);">
+            <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--primary-navy);">No placeholders found</p>
+            <p>No variables (e.g. <code>{{ '{{' }} PLACEHOLDER {{ '}}' }}</code>) were detected in this template document.</p>
+          </div>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: Live Note Sheet / Document Preview -->
+  <div class="preview-side">
+    <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-weight: 700; font-size: 0.9rem; color: var(--primary-navy); text-transform: uppercase; letter-spacing: 0.5px;">Live Document Preview</span>
+      <span style="font-size: 0.75rem; color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 2px 8px; border-radius: 10px;">Offline Mode</span>
+    </div>
+    
+    <div class="noting-sheet-preview" id="noting-sheet-preview" style="{% if 'master_fax' in template.id %}border-left: none; padding: 0.75in;{% endif %}">
+      
+      <!-- Document Header -->
+      <div class="noting-header" id="prev-doc-header">
+        TECHNICAL BALLISTICS RESEARCH LABORATORY<br>
+        <span style="font-size: 11pt; font-weight: normal; text-decoration: none;" id="prev-sub-module">HRD DIVISION</span><br>
+        <span style="font-size: 12pt;" id="prev-doc-type">INTER-OFFICE NOTE</span>
       </div>
       
-      <div style="margin-top: 3rem; display: flex; gap: 1.5rem; justify-content: flex-end;">
-        <a href="{{ url_for('training_menu') }}" class="btn btn-secondary">Cancel</a>
-        <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.75rem;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="17 10 12 15 7 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
-          </svg>
-          Generate Document / दस्तावेज़ बनाएँ
-        </button>
+      <!-- Meta Block -->
+      <div class="noting-meta" id="prev-meta-block">
+        <div>Ref No: <span id="prev-ref-no" style="font-weight: normal;">—</span></div>
+        <div>Date: <span id="prev-date" style="font-weight: normal;">—</span></div>
       </div>
-    {% else %}
-      <div style="text-align: center; padding: 3rem; color: var(--text-muted); border: 1px dashed var(--secondary-border); border-radius: var(--radius-md);">
-        <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--primary-navy);">No placeholders found</p>
-        <p>No variables (e.g. <code>{{ '{{' }} PLACEHOLDER {{ '}}' }}</code>) were detected in this template document.</p>
-        <p style="margin-top: 1rem;">Please upload a template version containing variable placeholders via the Document Manager.</p>
+      
+      <!-- Subject -->
+      <div class="noting-subject" id="prev-subject-block">
+        <span class="label">Subject:</span>
+        <span id="prev-subject" style="font-weight: bold;">—</span>
       </div>
-    {% endif %}
-  </form>
+      
+      <!-- Dynamic variables summary block -->
+      <div style="margin-top: 1.5rem; margin-bottom: 1.5rem; line-height: 1.6;">
+        <div style="font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-bottom: 10px; font-size: 10.5pt; text-transform: uppercase;">
+          Variables Summary / विवरण सारांश
+        </div>
+        <table style="width: 100%; border-collapse: collapse; font-size: 10pt;" id="prev-variables-table">
+          <!-- Dynamically filled by JS -->
+        </table>
+      </div>
+      
+      <!-- Signatures Footer -->
+      <div class="noting-signatures" id="prev-sig-block">
+        <div class="sig-block">
+          (<span id="prev-sig-name">—</span>)<br>
+          <span class="desig" id="prev-sig-desig">—</span>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/transliterate.js') }}"></script>
 <script>
+  const templateVars = {{ template.variables|tojson if template.variables else '[]' }};
+  const templateId = "{{ template.id }}";
+
   document.addEventListener('DOMContentLoaded', () => {
     // Automatically set default date values on date input boxes
     const dateInputs = document.querySelectorAll('input[type="date"]');
@@ -73,6 +132,107 @@
     dateInputs.forEach(input => {
       input.value = today;
     });
+    
+    // Bind Transliteration on English/Hindi matching pairs if present
+    bindTransliterationPairs();
+    
+    // Bind Live Preview Events
+    setupLivePreview();
   });
+
+  function bindTransliterationPairs() {
+    // Look for matching ENG and HINDI inputs
+    const engInputs = document.querySelectorAll('input[id*="eng"], input[id*="ENG"]');
+    engInputs.forEach(engEl => {
+      const baseId = engEl.id.replace(/_eng/i, "");
+      const hindiEl = document.getElementById(baseId + "_hindi") || document.getElementById(baseId + "_HINDI");
+      if (hindiEl) {
+        setupTransliteration(engEl.id, hindiEl.id, "auto-translit-check");
+      }
+    });
+    
+    // Check for SUBJECT_ENGLISH and SUBJECT_HINDI
+    const subEng = document.getElementById("SUBJECT_ENGLISH") || document.getElementById("subject_english");
+    const subHindi = document.getElementById("SUBJECT_HINDI") || document.getElementById("subject_hindi");
+    if (subEng && subHindi) {
+      setupTransliteration(subEng.id, subHindi.id, "auto-translit-check");
+    }
+  }
+
+  function setupLivePreview() {
+    const inputs = document.querySelectorAll('.form-side input, .form-side textarea, .form-side select');
+    inputs.forEach(input => {
+      input.addEventListener('input', updatePreview);
+    });
+    updatePreview();
+  }
+
+  function updatePreview() {
+    // Customize preview headers depending on type
+    const prevSubModule = document.getElementById('prev-sub-module');
+    const prevDocType = document.getElementById('prev-doc-type');
+    
+    if (templateId.includes('master_fax')) {
+      prevSubModule.style.display = 'none';
+      prevDocType.textContent = 'FAX MESSAGE';
+    } else {
+      prevSubModule.style.display = 'block';
+      prevDocType.textContent = 'INTER-OFFICE NOTE';
+    }
+    
+    // Meta block values
+    let refNo = '—';
+    let dateStr = '—';
+    let subjectStr = '';
+    let sigName = '—';
+    let sigDesig = '—';
+    
+    const tableBody = document.getElementById('prev-variables-table');
+    tableBody.innerHTML = '';
+
+    templateVars.forEach(variable => {
+      const el = document.getElementById(variable);
+      if (!el) return;
+      const val = el.value || '—';
+      
+      // Map meta keys
+      if (variable === 'REF_NO' || variable === 'ref_no') {
+        refNo = val;
+      } else if (variable === 'DATE' || variable === 'REF_DATE' || variable === 'date' || variable === 'ref_date') {
+        dateStr = formatDateStr(val);
+      } else if (variable.includes('SUBJECT')) {
+        subjectStr += (subjectStr ? ' / ' : '') + val;
+      } else if (variable === 'SIGNATORY_NAME' || variable === 'SIG_NAME' || variable === 'signatory_name' || variable === 'sig_name') {
+        sigName = val;
+      } else if (variable === 'SIGNATORY_DESIG' || variable === 'SIG_DESIG' || variable === 'signatory_desig' || variable === 'sig_desig') {
+        sigDesig = val;
+      } else {
+        // Render as generic variable row in summary table
+        const row = document.createElement('tr');
+        row.style.borderBottom = '1px solid #eee';
+        row.innerHTML = `
+          <td style="width: 35%; padding: 4px 0; font-weight: bold; color: #555;">${variable.replace('_', ' ')}:</td>
+          <td style="padding: 4px 0;">${val.replace(/\n/g, '<br>')}</td>
+        `;
+        tableBody.appendChild(row);
+      }
+    });
+
+    document.getElementById('prev-ref-no').textContent = refNo;
+    document.getElementById('prev-date').textContent = dateStr;
+    document.getElementById('prev-subject').textContent = subjectStr || '—';
+    document.getElementById('prev-sig-name').textContent = sigName;
+    document.getElementById('prev-sig-desig').textContent = sigDesig;
+  }
+
+  function formatDateStr(dateVal) {
+    if (!dateVal) return '—';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) return dateVal; // already formatted
+    const d = new Date(dateVal);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
 </script>
 {% endblock %}

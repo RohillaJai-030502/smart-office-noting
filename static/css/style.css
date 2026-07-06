@@ -656,3 +656,166 @@ textarea {
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   margin-bottom: -4px;
 }
+
+
+/* ============================================================
+   Split Screen Layout for Live Preview
+   ============================================================ */
+.preview-layout-container {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.form-side {
+  flex: 1;
+  max-width: 750px;
+}
+
+.preview-side {
+  flex: 1.1;
+  position: sticky;
+  top: 1.5rem;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  background: #f1f3f5;
+  border-radius: var(--radius-lg);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid var(--secondary-border);
+  padding: 1.5rem;
+}
+
+/* Noting Sheet live high-fidelity styles */
+.noting-sheet-preview {
+  background: #ffffff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  min-height: 842px; /* A4 Ratio */
+  padding: 1.25in 0.75in 0.75in 0.75in;
+  border-left: 2px solid #2e7d32; /* Note Sheet Green Line */
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 11pt;
+  line-height: 1.35;
+  color: #000000;
+  position: relative;
+}
+
+.noting-header {
+  text-align: center;
+  font-size: 13pt;
+  font-weight: bold;
+  text-decoration: underline;
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+}
+
+.noting-meta {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px double #333;
+  padding-bottom: 0.25rem;
+}
+
+.noting-subject {
+  margin-bottom: 1.5rem;
+  font-weight: bold;
+}
+
+.noting-subject .label {
+  text-decoration: underline;
+  margin-right: 0.5rem;
+}
+
+.noting-body {
+  margin-bottom: 1.5rem;
+  text-align: justify;
+}
+
+.noting-table-container {
+  margin-bottom: 1.5rem;
+}
+
+.noting-table-title {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.noting-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  font-size: 10pt;
+}
+
+.noting-table th, .noting-table td {
+  border: 1px solid #000000;
+  padding: 4px 8px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.noting-table th {
+  background-color: #f5f5f5;
+  text-align: center;
+  font-weight: bold;
+}
+
+.noting-table td.center, .noting-table th.center {
+  text-align: center;
+}
+
+.noting-signatures {
+  margin-top: 3.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  line-height: 1.2;
+}
+
+.sig-block {
+  margin-bottom: 2rem;
+  font-weight: bold;
+}
+
+.sig-block .desig {
+  font-weight: normal;
+  color: #333;
+}
+
+/* Transliteration control styles */
+.translit-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.translit-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--primary-navy);
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  background-color: var(--secondary-light);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--secondary-border);
+  transition: var(--transition-fast);
+}
+
+.translit-toggle:hover {
+  background-color: var(--secondary-border);
+}
+
+.translit-toggle input {
+  cursor: pointer;
+}
+
