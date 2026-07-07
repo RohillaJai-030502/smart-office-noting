@@ -77,7 +77,13 @@ def load_columns_map():
         return {}
 
 def load_masters():
-    return load_json(MASTERS_FILE, {"masters": []})["masters"]
+    masters = load_json(MASTERS_FILE, {"masters": []})["masters"]
+    valid_masters = []
+    for m in masters:
+        filepath = os.path.join("masters", m["filename"])
+        if os.path.exists(filepath):
+            valid_masters.append(m)
+    return valid_masters
 
 def save_masters(masters):
     save_json(MASTERS_FILE, {"masters": masters})
@@ -460,26 +466,35 @@ def upload_new_master():
     name = form_get("name", "Unnamed Master").strip()
     description = form_get("description", "Uploaded via Document Manager").strip()
     
-    if file and file.filename.endswith('.docx'):
-        masters = load_masters()
-        new_id = f"master_{str(len(masters)+1).zfill(3)}"
-        safe_filename = secure_filename(f"{new_id}_{file.filename}")
+    if not file.filename.lower().endswith('.docx'):
+        flash("Only .docx files are accepted.")
+        return redirect(url_for("masters_manager"))
         
-        # Save file to masters folder
-        os.makedirs("masters", exist_ok=True)
-        filepath = os.path.join("masters", safe_filename)
-        file.save(filepath)
-        
+    masters = load_masters()
+    new_id = f"master_{str(len(masters)+1).zfill(3)}"
+    safe_filename = secure_filename(f"{new_id}_{file.filename}")
+    
+    # Save file to masters folder
+    os.makedirs("masters", exist_ok=True)
+    filepath = os.path.join("masters", safe_filename)
+    file.save(filepath)
+    
+    try:
         # Trigger Variable Extraction
         variables = extract_variables_from_docx(filepath)
+    except Exception:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        flash("The uploaded file is not a valid Word (.docx) document. Please check it and try again.")
+        return redirect(url_for("masters_manager"))
         
-        # 🧠 SMART CATEGORIZATION LOGIC
-        if len(variables) > 0:
-            form_type = "dynamic"
-            flash_msg = f"✨ Dynamic Master added! Extracted {len(variables)} form fields."
-        else:
-            form_type = "static"
-            flash_msg = "🖨️ Static Template added! No variables found, saving as a printable blank document."
+    # 🧠 SMART CATEGORIZATION LOGIC
+    if len(variables) > 0:
+        form_type = "dynamic"
+        flash_msg = f"✨ Dynamic Master added! Extracted {len(variables)} form fields."
+    else:
+        form_type = "static"
+        flash_msg = "🖨️ Static Template added! No variables found, saving as a printable blank document."
         
         # Append to masters.json
         masters.append({
@@ -558,9 +573,33 @@ def upload_master(master_id):
     master  = next((m for m in masters if m["id"] == master_id), None)
     if master and "file" in request.files:
         file = request.files["file"]
-        if file.filename.endswith(".docx"):
-            filepath = os.path.join("masters", master["filename"])
-            file.save(filepath)
+        if not file.filename.lower().endswith(".docx"):
+            flash("Only .docx files are accepted.")
+            return redirect(url_for("masters_manager"))
+            
+        filepath = os.path.join("masters", master["filename"])
+        temp_filepath = filepath + ".tmp"
+        file.save(temp_filepath)
+        
+        try:
+            # Validate docx by parsing it
+            extract_variables_from_docx(temp_filepath)
+            
+            # Replace existing file
+            if os.path.exists(filepath):
+                os.remove(filepath)
+            os.rename(temp_filepath, filepath)
+            
+            # Re-extract and update variables list in masters.json
+            variables = extract_variables_from_docx(filepath)
+            master["variables"] = variables
+            save_masters(masters)
+            flash("Template updated successfully!")
+        except Exception:
+            if os.path.exists(temp_filepath):
+                os.remove(temp_filepath)
+            flash("The uploaded file is not a valid Word (.docx) document. Please check it and try again.")
+            
     return redirect(url_for("masters_manager"))
 
 # ══════════════════════════════════════
@@ -575,8 +614,6 @@ def dynamic_form(master_id):
         return "Dynamic form not found or invalid type.", 404
         
     return render_template('dynamic_form.html', template=master)
-
-import docx # Make sure this is imported at the top of app.py
 
 @app.route('/submit-dynamic', methods=['POST'])
 def submit_dynamic():

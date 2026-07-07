@@ -971,51 +971,37 @@ def generate_appraisal_proforma(data):
     
     # Placeholders mapping
     placeholders = {
-        "STUDENT_NAME_HINDI": data.get("student_name_hindi", ""),
-        "FATHER_NAME_HINDI": data.get("father_name_hindi", ""),
-        "STUDENT_NAME_ENG": data.get("student_name_eng", ""),
-        "FATHER_NAME_ENG": data.get("father_name_eng", ""),
-        "BRANCH_SEMESTER": data.get("branch_semester", ""),
-        "MOBILE_NO": data.get("mobile_no", ""),
-        "INSTITUTE_NAME": data.get("institute_name", ""),
-        "GROUP_NAME": data.get("group_name", ""),
-        "GROUP_DIRECTOR": data.get("group_director", ""),
-        "DIV_HEAD_COORDINATOR": data.get("div_head_coordinator", ""),
-        "PROJECT_TITLE": data.get("project_title", ""),
-        "WORK_DESCRIPTION": data.get("work_description", ""),
-        "DATE_OF_JOINING": data.get("date_of_joining", ""),
-        "DATE_OF_COMPLETION": data.get("date_of_completion", ""),
-        "ATTENDANCE_GRADE": data.get("attendance_grade", ""),
-        "PERFORMANCE_RATING": data.get("performance_rating", ""),
-        "REPORT_SUBMITTED": data.get("report_submitted", ""),
-        "REMARKS": data.get("remarks", ""),
-        "RECOMMENDATION": data.get("recommendation", "")
+        "{{STUDENT_NAME_HINDI}}":   get_safe(data, "student_name_hindi", ""),
+        "{{FATHER_NAME_HINDI}}":    get_safe(data, "father_name_hindi", ""),
+        "{{STUDENT_NAME_ENG}}":     get_safe(data, "student_name_eng", ""),
+        "{{FATHER_NAME_ENG}}":      get_safe(data, "father_name_eng", ""),
+        "{{BRANCH_SEMESTER}}":      get_safe(data, "branch_semester", ""),
+        "{{MOBILE_NO}}":            get_safe(data, "mobile_no", ""),
+        "{{INSTITUTE_NAME}}":       get_safe(data, "institute_name", ""),
+        "{{GROUP_NAME}}":           get_safe(data, "group_name", ""),
+        "{{GROUP_DIRECTOR}}":       get_safe(data, "group_director", ""),
+        "{{DIV_HEAD_COORDINATOR}}": get_safe(data, "div_head_coordinator", ""),
+        "{{PROJECT_TITLE}}":        get_safe(data, "project_title", ""),
+        "{{WORK_DESCRIPTION}}":     get_safe(data, "work_description", ""),
+        "{{DATE_OF_JOINING}}":      get_safe(data, "date_of_joining", ""),
+        "{{DATE_OF_COMPLETION}}":   get_safe(data, "date_of_completion", ""),
+        "{{ATTENDANCE_GRADE}}":     get_safe(data, "attendance_grade", ""),
+        "{{PERFORMANCE_RATING}}":   get_safe(data, "performance_rating", ""),
+        "{{REPORT_SUBMITTED}}":     get_safe(data, "report_submitted", ""),
+        "{{REMARKS}}":              get_safe(data, "remarks", ""),
+        "{{RECOMMENDATION}}":       get_safe(data, "recommendation", "")
     }
     
-    # Helper to replace placeholders in a collection of paragraphs
-    def replace_placeholders(paragraphs, ph_map):
-        for para in paragraphs:
-            for key, val in ph_map.items():
-                placeholder = f"{{{{{key}}}}}"
-                if placeholder in para.text:
-                    # If placeholder is in one run, replace it there
-                    replaced = False
-                    for run in para.runs:
-                        if placeholder in run.text:
-                            run.text = run.text.replace(placeholder, str(val))
-                            replaced = True
-                    # Fallback to paragraph-level replace
-                    if not replaced:
-                        para.text = para.text.replace(placeholder, str(val))
-
     # Replace in standard paragraphs
-    replace_placeholders(doc.paragraphs, placeholders)
+    for para in doc.paragraphs:
+        replace_placeholders_in_paragraph(para, placeholders)
     
     # Replace inside tables
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
-                replace_placeholders(cell.paragraphs, placeholders)
+                for para in cell.paragraphs:
+                    replace_placeholders_in_paragraph(para, placeholders)
                     
     # Save the output file
     output_dir = os.path.join(base_dir, "generated_notices")
