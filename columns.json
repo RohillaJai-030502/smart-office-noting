@@ -12,6 +12,7 @@
   ],
   "lecture_noting": [
     "क्र.सं. / S. No.",
+    "पी.आई.एस. नं. / PIS No.",
     "नाम एवं पद / Name and Design.",
     "व्याख्यान का विषय / Lecture Title",
     "स्थान व दिनांक / Place & Date",
@@ -20,6 +21,7 @@
   ],
   "dgmss_noting": [
     "क्र.सं. / S. No.",
+    "पी.आई.एस. नं. / PIS No.",
     "नाम एवं पद / Name and Design.",
     "कोर्स का नाम / Course Title",
     "स्थान / Place/Venue",
