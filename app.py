@@ -89,6 +89,32 @@ def check_password(password):
     config = load_config()
     return password == config.get("password", "Tbrl0000")
 
+def form_get(field, default=""):
+    """form_get() that respects the default for blank/empty values too."""
+    val = form_get(field)
+    return default if val is None or val == "" else val
+
+def safe_int(value, default=1):
+    """Safely converts input to integer, falling back to default on error."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+def parse_date_safe(value, fmt="%Y-%m-%d"):
+    """Parses a date string safely, raising a ValueError on formatting error."""
+    if not value:
+        raise ValueError("Missing or empty date value.")
+    try:
+        return datetime.strptime(str(value).strip(), fmt)
+    except (TypeError, ValueError) as e:
+        raise ValueError(f"Invalid date format: '{value}'. Expected '{fmt}'.") from e
+
+@app.errorhandler(Exception)
+def handle_any_error(e):
+    app.logger.exception("Unhandled error encountered")
+    return render_template("error.html", message="Something went wrong generating your document. Please check your form entries and try again."), 500
+
 # ── NEW HELPER: Auto-Extract Variables ──
 def extract_variables_from_docx(filepath):
     """Reads a .docx file and extracts all variables inside {{ }}"""
@@ -109,6 +135,13 @@ def extract_variables_from_docx(filepath):
                     variables.add(match.strip())
                     
     return list(variables)
+
+def get_master_safe(masters, master_id):
+    """Safely retrieves a master template by ID, falling back to the first one or None."""
+    if not masters:
+        return None
+    master = next((m for m in masters if m["id"] == master_id), None)
+    return master if master is not None else masters[0]
 
 # ══════════════════════════════════════
 # DASHBOARD
@@ -156,22 +189,22 @@ def ion_notice():
 @app.route("/save-defaults", methods=["POST"])
 def save_defaults_route():
     defaults = {
-        "signatory_name":        request.form.get("signatory_name", ""),
-        "signatory_designation": request.form.get("signatory_designation", ""),
+        "signatory_name":        form_get("signatory_name", ""),
+        "signatory_designation": form_get("signatory_designation", ""),
     }
     save_json(DEFAULTS_FILE, defaults)
     session["form_data"] = {
-        "master_id":             request.form.get("master_id"),
-        "degree":                request.form.get("degree"),
-        "start_month":           request.form.get("start_month"),
-        "start_year":            request.form.get("start_year"),
-        "end_month":             request.form.get("end_month"),
-        "end_year":              request.form.get("end_year"),
-        "last_date":             request.form.get("last_date"),
-        "ion_number":            request.form.get("ion_number"),
-        "notice_date":           request.form.get("notice_date"),
-        "signatory_name":        request.form.get("signatory_name"),
-        "signatory_designation": request.form.get("signatory_designation"),
+        "master_id":             form_get("master_id"),
+        "degree":                form_get("degree"),
+        "start_month":           form_get("start_month"),
+        "start_year":            form_get("start_year"),
+        "end_month":             form_get("end_month"),
+        "end_year":              form_get("end_year"),
+        "last_date":             form_get("last_date"),
+        "ion_number":            form_get("ion_number"),
+        "notice_date":           form_get("notice_date"),
+        "signatory_name":        form_get("signatory_name"),
+        "signatory_designation": form_get("signatory_designation"),
         "departments":           request.form.getlist("departments"),
     }
     return redirect(url_for("ion_notice"))
@@ -185,17 +218,17 @@ def preview():
     dept_rows   = [padded[r * num_cols:(r + 1) * num_cols] for r in range(num_rows)]
 
     data = {
-        "master_id":             request.form.get("master_id"),
-        "degree":                request.form.get("degree"),
-        "start_month":           request.form.get("start_month"),
-        "start_year":            request.form.get("start_year"),
-        "end_month":             request.form.get("end_month"),
-        "end_year":              request.form.get("end_year"),
-        "last_date":             request.form.get("last_date"),
-        "ion_number":            request.form.get("ion_number"),
-        "notice_date":           request.form.get("notice_date"),
-        "signatory_name":        request.form.get("signatory_name"),
-        "signatory_designation": request.form.get("signatory_designation"),
+        "master_id":             form_get("master_id"),
+        "degree":                form_get("degree"),
+        "start_month":           form_get("start_month"),
+        "start_year":            form_get("start_year"),
+        "end_month":             form_get("end_month"),
+        "end_year":              form_get("end_year"),
+        "last_date":             form_get("last_date"),
+        "ion_number":            form_get("ion_number"),
+        "notice_date":           form_get("notice_date"),
+        "signatory_name":        form_get("signatory_name"),
+        "signatory_designation": form_get("signatory_designation"),
         "departments":           departments,
         "dept_rows":             dept_rows,
     }
@@ -205,17 +238,17 @@ def preview():
 @app.route("/edit", methods=["POST"])
 def edit():
     session["form_data"] = {
-        "master_id":             request.form.get("master_id"),
-        "degree":                request.form.get("degree"),
-        "start_month":           request.form.get("start_month"),
-        "start_year":            request.form.get("start_year"),
-        "end_month":             request.form.get("end_month"),
-        "end_year":              request.form.get("end_year"),
-        "last_date":             request.form.get("last_date"),
-        "ion_number":            request.form.get("ion_number"),
-        "notice_date":           request.form.get("notice_date"),
-        "signatory_name":        request.form.get("signatory_name"),
-        "signatory_designation": request.form.get("signatory_designation"),
+        "master_id":             form_get("master_id"),
+        "degree":                form_get("degree"),
+        "start_month":           form_get("start_month"),
+        "start_year":            form_get("start_year"),
+        "end_month":             form_get("end_month"),
+        "end_year":              form_get("end_year"),
+        "last_date":             form_get("last_date"),
+        "ion_number":            form_get("ion_number"),
+        "notice_date":           form_get("notice_date"),
+        "signatory_name":        form_get("signatory_name"),
+        "signatory_designation": form_get("signatory_designation"),
         "departments":           request.form.getlist("departments"),
     }
     return redirect(url_for("ion_notice"))
@@ -223,20 +256,23 @@ def edit():
 @app.route("/generate", methods=["POST"])
 def generate():
     masters   = load_masters()
-    master_id = request.form.get("master_id", "master_001")
-    master    = next((m for m in masters if m["id"] == master_id), masters[0])
+    master_id = form_get("master_id", "master_001")
+    master = get_master_safe(masters, master_id)
+    if not master:
+        flash("No master templates exist yet. Please add one first.")
+        return redirect(url_for("masters_manager"))
 
     data = {
-        "degree":                request.form.get("degree"),
-        "start_month":           request.form.get("start_month"),
-        "start_year":            request.form.get("start_year"),
-        "end_month":             request.form.get("end_month"),
-        "end_year":              request.form.get("end_year"),
-        "last_date":             request.form.get("last_date"),
-        "ion_number":            request.form.get("ion_number"),
-        "notice_date":           request.form.get("notice_date"),
-        "signatory_name":        request.form.get("signatory_name"),
-        "signatory_designation": request.form.get("signatory_designation"),
+        "degree":                form_get("degree"),
+        "start_month":           form_get("start_month"),
+        "start_year":            form_get("start_year"),
+        "end_month":             form_get("end_month"),
+        "end_year":              form_get("end_year"),
+        "last_date":             form_get("last_date"),
+        "ion_number":            form_get("ion_number"),
+        "notice_date":           form_get("notice_date"),
+        "signatory_name":        form_get("signatory_name"),
+        "signatory_designation": form_get("signatory_designation"),
         "departments":           request.form.getlist("departments"),
     }
 
@@ -254,20 +290,23 @@ def generate():
 @app.route("/download", methods=["POST"])
 def download():
     masters   = load_masters()
-    master_id = request.form.get("master_id", "master_001")
-    master    = next((m for m in masters if m["id"] == master_id), masters[0])
+    master_id = form_get("master_id", "master_001")
+    master = get_master_safe(masters, master_id)
+    if not master:
+        flash("No master templates exist yet. Please add one first.")
+        return redirect(url_for("masters_manager"))
 
     data = {
-        "degree":                request.form.get("degree"),
-        "start_month":           request.form.get("start_month"),
-        "start_year":            request.form.get("start_year"),
-        "end_month":             request.form.get("end_month"),
-        "end_year":              request.form.get("end_year"),
-        "last_date":             request.form.get("last_date"),
-        "ion_number":            request.form.get("ion_number"),
-        "notice_date":           request.form.get("notice_date"),
-        "signatory_name":        request.form.get("signatory_name"),
-        "signatory_designation": request.form.get("signatory_designation"),
+        "degree":                form_get("degree"),
+        "start_month":           form_get("start_month"),
+        "start_year":            form_get("start_year"),
+        "end_month":             form_get("end_month"),
+        "end_year":              form_get("end_year"),
+        "last_date":             form_get("last_date"),
+        "ion_number":            form_get("ion_number"),
+        "notice_date":           form_get("notice_date"),
+        "signatory_name":        form_get("signatory_name"),
+        "signatory_designation": form_get("signatory_designation"),
         "departments":           request.form.getlist("departments"),
     }
 
@@ -319,7 +358,7 @@ def download_static(master_id):
 # ══════════════════════════════════════
 @app.route("/departments/add", methods=["POST"])
 def add_department():
-    name = request.form.get("new_dept", "").strip().upper()
+    name = form_get("new_dept", "").strip().upper()
     if name:
         departments = load_departments()
         if name not in departments:
@@ -336,8 +375,8 @@ def delete_department(name):
 
 @app.route("/departments/edit", methods=["POST"])
 def edit_department():
-    old_name = request.form.get("old_name", "").strip()
-    new_name = request.form.get("new_name", "").strip().upper()
+    old_name = form_get("old_name", "").strip()
+    new_name = form_get("new_name", "").strip().upper()
     if old_name and new_name:
         departments = load_departments()
         departments = [new_name if d == old_name else d for d in departments]
@@ -351,7 +390,7 @@ def edit_department():
 def masters_page():
     error = None
     if request.method == "POST":
-        password = request.form.get("password", "")
+        password = form_get("password", "")
         if check_password(password):
             session["master_unlocked"] = True
             return redirect(url_for("masters_manager"))
@@ -375,15 +414,18 @@ def create_master():
     if not session.get("master_unlocked"):
         return redirect(url_for("masters_page"))
 
-    source_id   = request.form.get("source_id")
-    name        = request.form.get("name", "").strip()
-    description = request.form.get("description", "").strip()
+    source_id   = form_get("source_id")
+    name        = form_get("name", "").strip()
+    description = form_get("description", "").strip()
 
     if not name:
         return redirect(url_for("masters_manager"))
 
     masters     = load_masters()
-    source      = next((m for m in masters if m["id"] == source_id), masters[0])
+    source      = get_master_safe(masters, source_id)
+    if not source:
+        flash("No master templates exist to copy from.")
+        return redirect(url_for("masters_manager"))
 
     new_id       = f"master_{str(len(masters)+1).zfill(3)}"
     new_filename = f"{new_id}.docx"
@@ -415,8 +457,8 @@ def upload_new_master():
         return redirect(url_for("masters_manager"))
         
     file = request.files['file']
-    name = request.form.get("name", "Unnamed Master").strip()
-    description = request.form.get("description", "Uploaded via Document Manager").strip()
+    name = form_get("name", "Unnamed Master").strip()
+    description = form_get("description", "Uploaded via Document Manager").strip()
     
     if file and file.filename.endswith('.docx'):
         masters = load_masters()
@@ -473,7 +515,7 @@ def delete_master(master_id):
         return redirect(url_for("masters_page"))
         
     # 🔒 NEW: Secondary password check for deletion
-    confirm_password = request.form.get("confirm_password", "")
+    confirm_password = form_get("confirm_password", "")
     if not check_password(confirm_password):
         flash("❌ Incorrect password! Deletion cancelled.")
         return redirect(url_for("masters_manager"))
@@ -538,7 +580,7 @@ import docx # Make sure this is imported at the top of app.py
 
 @app.route('/submit-dynamic', methods=['POST'])
 def submit_dynamic():
-    master_id = request.form.get("template_id")
+    master_id = form_get("template_id")
     masters = load_masters()
     master = next((m for m in masters if m["id"] == master_id), None)
     
@@ -548,7 +590,7 @@ def submit_dynamic():
     # 1. Grab all the user's answers from the form
     data = {}
     for var in master.get("variables", []):
-        data[var] = request.form.get(var, "")
+        data[var] = form_get(var, "")
         
     # 2. Open the Master Document
     master_path = os.path.join("masters", master["filename"])
@@ -614,32 +656,32 @@ def tbrl_noting():
 def generate_noting():
     # 1. Update Signatory Defaults in Memory
     defaults = load_defaults()
-    defaults["sig1_name"] = request.form.get("sig1_name", "")
-    defaults["sig1_desig"] = request.form.get("sig1_desig", "")
-    defaults["sig2_name"] = request.form.get("sig2_name", "")
-    defaults["sig2_desig"] = request.form.get("sig2_desig", "")
+    defaults["sig1_name"] = form_get("sig1_name", "")
+    defaults["sig1_desig"] = form_get("sig1_desig", "")
+    defaults["sig2_name"] = form_get("sig2_name", "")
+    defaults["sig2_desig"] = form_get("sig2_desig", "")
     save_json(DEFAULTS_FILE, defaults)
 
     # 2. Extract Table Configuration & Data
     columns = request.form.getlist("table_columns")
-    num_rows = int(request.form.get("num_rows", 1))
+    num_rows = safe_int(form_get("num_rows", 1), 1)
     
     nominees = []
     for i in range(num_rows):
         row_data = {}
         for col in columns:
-            row_data[col] = request.form.get(f"{col}_{i}", "")
+            row_data[col] = form_get(f"{col}_{i}", "")
         nominees.append(row_data)
 
     # 3. Handle 'Other' Course Type
-    course_type = request.form.get("course_type")
+    course_type = form_get("course_type")
     if course_type == "Others":
-        course_type = request.form.get("custom_course_type", "Course")
+        course_type = form_get("custom_course_type", "Course")
 
-    ref_no = request.form.get("form_no") or request.form.get("ref_no")
-    lab_name = request.form.get("lab_name", "टीबीआरएल")
+    ref_no = form_get("form_no") or form_get("ref_no")
+    lab_name = form_get("lab_name", "टीबीआरएल")
     
-    references_raw = request.form.get("references_json")
+    references_raw = form_get("references_json")
     references = []
     if references_raw:
         try:
@@ -649,22 +691,22 @@ def generate_noting():
     if not references:
         references = [{
             "source": ref_no or "",
-            "date": request.form.get("ref_date", "")
+            "date": form_get("ref_date", "")
         }]
 
     # 4. Compile all data to send to noting_generator.py
     data = {
         "ref_no": ref_no,
-        "subject_hindi": request.form.get("subject_hindi"),
-        "subject_english": request.form.get("subject_english"),
-        "reference_text": request.form.get("reference_text"),
-        "ref_date": request.form.get("ref_date"),
-        "start_date": request.form.get("start_date"),
-        "end_date": request.form.get("end_date"),
-        "org_institute": request.form.get("org_institute"),
-        "course_title": request.form.get("course_title"),
+        "subject_hindi": form_get("subject_hindi"),
+        "subject_english": form_get("subject_english"),
+        "reference_text": form_get("reference_text"),
+        "ref_date": form_get("ref_date"),
+        "start_date": form_get("start_date"),
+        "end_date": form_get("end_date"),
+        "org_institute": form_get("org_institute"),
+        "course_title": form_get("course_title"),
         "course_type": course_type,
-        "group_name": request.form.get("group_name"),
+        "group_name": form_get("group_name"),
         "sig1_name": defaults["sig1_name"],
         "sig1_desig": defaults["sig1_desig"],
         "sig2_name": defaults["sig2_name"],
@@ -707,29 +749,29 @@ def lecture_noting():
 def generate_lecture_noting_route():
     # 1. Update Signatory Defaults in Memory
     defaults = load_defaults()
-    defaults["sig1_name"] = request.form.get("sig1_name", "")
-    defaults["sig1_desig"] = request.form.get("sig1_desig", "")
-    defaults["sig2_name"] = request.form.get("sig2_name", "")
-    defaults["sig2_desig"] = request.form.get("sig2_desig", "")
+    defaults["sig1_name"] = form_get("sig1_name", "")
+    defaults["sig1_desig"] = form_get("sig1_desig", "")
+    defaults["sig2_name"] = form_get("sig2_name", "")
+    defaults["sig2_desig"] = form_get("sig2_desig", "")
     save_json(DEFAULTS_FILE, defaults)
 
     # 2. Extract Table Configuration & Data
     columns = request.form.getlist("table_columns")
-    num_rows = int(request.form.get("num_rows", 1))
+    num_rows = safe_int(form_get("num_rows", 1), 1)
     
     nominees = []
     for i in range(num_rows):
         row_data = {}
         for col in columns:
-            row_data[col] = request.form.get(f"{col}_{i}", "")
+            row_data[col] = form_get(f"{col}_{i}", "")
         nominees.append(row_data)
 
-    course_type = request.form.get("course_type")
+    course_type = form_get("course_type")
     
-    ref_no = request.form.get("form_no") or request.form.get("ref_no")
-    lab_name = request.form.get("lab_name", "टीबीआरएल")
+    ref_no = form_get("form_no") or form_get("ref_no")
+    lab_name = form_get("lab_name", "टीबीआरएल")
     
-    references_raw = request.form.get("references_json")
+    references_raw = form_get("references_json")
     references = []
     if references_raw:
         try:
@@ -739,23 +781,23 @@ def generate_lecture_noting_route():
     if not references:
         references = [{
             "source": ref_no or "",
-            "date": request.form.get("ref_date", "")
+            "date": form_get("ref_date", "")
         }]
 
     # Compile all data
     data = {
         "ref_no": ref_no,
-        "subject_hindi": request.form.get("subject_hindi"),
-        "subject_english": request.form.get("subject_english"),
-        "reference_text": request.form.get("reference_text"),
-        "ref_date": request.form.get("ref_date"),
-        "start_date": request.form.get("start_date"),
-        "end_date": request.form.get("end_date"),
-        "org_institute": request.form.get("org_institute"),
-        "course_title": request.form.get("course_title"),
-        "lecture_title": request.form.get("lecture_title"),
+        "subject_hindi": form_get("subject_hindi"),
+        "subject_english": form_get("subject_english"),
+        "reference_text": form_get("reference_text"),
+        "ref_date": form_get("ref_date"),
+        "start_date": form_get("start_date"),
+        "end_date": form_get("end_date"),
+        "org_institute": form_get("org_institute"),
+        "course_title": form_get("course_title"),
+        "lecture_title": form_get("lecture_title"),
         "course_type": course_type,
-        "group_name": request.form.get("group_name"),
+        "group_name": form_get("group_name"),
         "sig1_name": defaults["sig1_name"],
         "sig1_desig": defaults["sig1_desig"],
         "sig2_name": defaults["sig2_name"],
@@ -798,29 +840,29 @@ def dgmss_noting():
 def generate_dgmss_noting_route():
     # 1. Update Signatory Defaults in Memory
     defaults = load_defaults()
-    defaults["sig1_name"] = request.form.get("sig1_name", "")
-    defaults["sig1_desig"] = request.form.get("sig1_desig", "")
-    defaults["sig2_name"] = request.form.get("sig2_name", "")
-    defaults["sig2_desig"] = request.form.get("sig2_desig", "")
+    defaults["sig1_name"] = form_get("sig1_name", "")
+    defaults["sig1_desig"] = form_get("sig1_desig", "")
+    defaults["sig2_name"] = form_get("sig2_name", "")
+    defaults["sig2_desig"] = form_get("sig2_desig", "")
     save_json(DEFAULTS_FILE, defaults)
 
     # 2. Extract Table Configuration & Data
     columns = request.form.getlist("table_columns")
-    num_rows = int(request.form.get("num_rows", 1))
+    num_rows = safe_int(form_get("num_rows", 1), 1)
     
     nominees = []
     for i in range(num_rows):
         row_data = {}
         for col in columns:
-            row_data[col] = request.form.get(f"{col}_{i}", "")
+            row_data[col] = form_get(f"{col}_{i}", "")
         nominees.append(row_data)
 
-    course_type = request.form.get("course_type")
+    course_type = form_get("course_type")
     
-    ref_no = request.form.get("form_no") or request.form.get("ref_no")
-    lab_name = request.form.get("lab_name", "टीबीआरएल")
+    ref_no = form_get("form_no") or form_get("ref_no")
+    lab_name = form_get("lab_name", "टीबीआरएल")
     
-    references_raw = request.form.get("references_json")
+    references_raw = form_get("references_json")
     references = []
     if references_raw:
         try:
@@ -830,22 +872,22 @@ def generate_dgmss_noting_route():
     if not references:
         references = [{
             "source": ref_no or "",
-            "date": request.form.get("ref_date", "")
+            "date": form_get("ref_date", "")
         }]
 
     # Compile all data
     data = {
         "ref_no": ref_no,
-        "subject_hindi": request.form.get("subject_hindi"),
-        "subject_english": request.form.get("subject_english"),
-        "reference_text": request.form.get("reference_text"),
-        "ref_date": request.form.get("ref_date"),
-        "start_date": request.form.get("start_date"),
-        "end_date": request.form.get("end_date"),
-        "org_institute": request.form.get("org_institute"),
-        "course_title": request.form.get("course_title"),
+        "subject_hindi": form_get("subject_hindi"),
+        "subject_english": form_get("subject_english"),
+        "reference_text": form_get("reference_text"),
+        "ref_date": form_get("ref_date"),
+        "start_date": form_get("start_date"),
+        "end_date": form_get("end_date"),
+        "org_institute": form_get("org_institute"),
+        "course_title": form_get("course_title"),
         "course_type": course_type,
-        "group_name": request.form.get("group_name"),
+        "group_name": form_get("group_name"),
         "sig1_name": defaults["sig1_name"],
         "sig1_desig": defaults["sig1_desig"],
         "sig2_name": defaults["sig2_name"],
@@ -887,29 +929,29 @@ def fee_noting():
 def generate_fee_noting_route():
     # 1. Update Signatory Defaults in Memory
     defaults = load_defaults()
-    defaults["sig1_name"] = request.form.get("sig1_name", "")
-    defaults["sig1_desig"] = request.form.get("sig1_desig", "")
-    defaults["sig2_name"] = request.form.get("sig2_name", "")
-    defaults["sig2_desig"] = request.form.get("sig2_desig", "")
+    defaults["sig1_name"] = form_get("sig1_name", "")
+    defaults["sig1_desig"] = form_get("sig1_desig", "")
+    defaults["sig2_name"] = form_get("sig2_name", "")
+    defaults["sig2_desig"] = form_get("sig2_desig", "")
     save_json(DEFAULTS_FILE, defaults)
 
     # 2. Extract Table Configuration & Data
     columns = request.form.getlist("table_columns")
-    num_rows = int(request.form.get("num_rows", 1))
+    num_rows = safe_int(form_get("num_rows", 1), 1)
     
     nominees = []
     for i in range(num_rows):
         row_data = {}
         for col in columns:
-            row_data[col] = request.form.get(f"{col}_{i}", "")
+            row_data[col] = form_get(f"{col}_{i}", "")
         nominees.append(row_data)
 
-    course_type = request.form.get("course_type")
+    course_type = form_get("course_type")
     
-    ref_no = request.form.get("form_no") or request.form.get("ref_no")
-    lab_name = request.form.get("lab_name", "टीबीआरएल")
+    ref_no = form_get("form_no") or form_get("ref_no")
+    lab_name = form_get("lab_name", "टीबीआरएल")
     
-    references_raw = request.form.get("references_json")
+    references_raw = form_get("references_json")
     references = []
     if references_raw:
         try:
@@ -919,23 +961,23 @@ def generate_fee_noting_route():
     if not references:
         references = [{
             "source": ref_no or "",
-            "date": request.form.get("ref_date", "")
+            "date": form_get("ref_date", "")
         }]
 
     # Compile all data
     data = {
         "ref_no": ref_no,
-        "subject_hindi": request.form.get("subject_hindi"),
-        "subject_english": request.form.get("subject_english"),
-        "reference_text": request.form.get("reference_text"),
-        "ref_date": request.form.get("ref_date"),
-        "ref_mail_date": request.form.get("ref_mail_date"),
-        "start_date": request.form.get("start_date"),
-        "end_date": request.form.get("end_date"),
-        "org_institute": request.form.get("org_institute"),
-        "course_title": request.form.get("course_title"),
+        "subject_hindi": form_get("subject_hindi"),
+        "subject_english": form_get("subject_english"),
+        "reference_text": form_get("reference_text"),
+        "ref_date": form_get("ref_date"),
+        "ref_mail_date": form_get("ref_mail_date"),
+        "start_date": form_get("start_date"),
+        "end_date": form_get("end_date"),
+        "org_institute": form_get("org_institute"),
+        "course_title": form_get("course_title"),
         "course_type": course_type,
-        "group_name": request.form.get("group_name"),
+        "group_name": form_get("group_name"),
         "sig1_name": defaults["sig1_name"],
         "sig1_desig": defaults["sig1_desig"],
         "sig2_name": defaults["sig2_name"],
@@ -977,29 +1019,29 @@ def cancellation_noting():
 def generate_cancellation_noting_route():
     # 1. Update Signatory Defaults in Memory
     defaults = load_defaults()
-    defaults["sig1_name"] = request.form.get("sig1_name", "")
-    defaults["sig1_desig"] = request.form.get("sig1_desig", "")
-    defaults["sig2_name"] = request.form.get("sig2_name", "")
-    defaults["sig2_desig"] = request.form.get("sig2_desig", "")
+    defaults["sig1_name"] = form_get("sig1_name", "")
+    defaults["sig1_desig"] = form_get("sig1_desig", "")
+    defaults["sig2_name"] = form_get("sig2_name", "")
+    defaults["sig2_desig"] = form_get("sig2_desig", "")
     save_json(DEFAULTS_FILE, defaults)
 
     # 2. Extract Table Configuration & Data
     columns = request.form.getlist("table_columns")
-    num_rows = int(request.form.get("num_rows", 1))
+    num_rows = safe_int(form_get("num_rows", 1), 1)
     
     nominees = []
     for i in range(num_rows):
         row_data = {}
         for col in columns:
-            row_data[col] = request.form.get(f"{col}_{i}", "")
+            row_data[col] = form_get(f"{col}_{i}", "")
         nominees.append(row_data)
 
-    course_type = request.form.get("course_type")
+    course_type = form_get("course_type")
     
-    ref_no = request.form.get("form_no") or request.form.get("ref_no")
-    lab_name = request.form.get("lab_name", "टीबीआरएल")
+    ref_no = form_get("form_no") or form_get("ref_no")
+    lab_name = form_get("lab_name", "टीबीआरएल")
     
-    references_raw = request.form.get("references_json")
+    references_raw = form_get("references_json")
     references = []
     if references_raw:
         try:
@@ -1009,29 +1051,29 @@ def generate_cancellation_noting_route():
     if not references:
         references = [{
             "source": ref_no or "",
-            "date": request.form.get("ref_date", "")
+            "date": form_get("ref_date", "")
         }]
 
     # Compile all data
     data = {
         "ref_no": ref_no,
-        "subject_hindi": request.form.get("subject_hindi"),
-        "subject_english": request.form.get("subject_english"),
-        "reference_text": request.form.get("reference_text"),
-        "ref_date": request.form.get("ref_date"),
-        "ref_mail_date": request.form.get("ref_mail_date"),
-        "ion_ref_source": request.form.get("ion_ref_source"),
-        "ion_ref_date": request.form.get("ion_ref_date"),
-        "cancel_nominee_name": request.form.get("cancel_nominee_name"),
-        "cancel_group_name": request.form.get("cancel_group_name"),
-        "cancel_reason": request.form.get("cancel_reason"),
-        "course_type_short": request.form.get("course_type_short"),
-        "start_date": request.form.get("start_date"),
-        "end_date": request.form.get("end_date"),
-        "org_institute": request.form.get("org_institute"),
-        "course_title": request.form.get("course_title"),
+        "subject_hindi": form_get("subject_hindi"),
+        "subject_english": form_get("subject_english"),
+        "reference_text": form_get("reference_text"),
+        "ref_date": form_get("ref_date"),
+        "ref_mail_date": form_get("ref_mail_date"),
+        "ion_ref_source": form_get("ion_ref_source"),
+        "ion_ref_date": form_get("ion_ref_date"),
+        "cancel_nominee_name": form_get("cancel_nominee_name"),
+        "cancel_group_name": form_get("cancel_group_name"),
+        "cancel_reason": form_get("cancel_reason"),
+        "course_type_short": form_get("course_type_short"),
+        "start_date": form_get("start_date"),
+        "end_date": form_get("end_date"),
+        "org_institute": form_get("org_institute"),
+        "course_title": form_get("course_title"),
         "course_type": course_type,
-        "group_name": request.form.get("group_name"),
+        "group_name": form_get("group_name"),
         "sig1_name": defaults["sig1_name"],
         "sig1_desig": defaults["sig1_desig"],
         "sig2_name": defaults["sig2_name"],
@@ -1073,46 +1115,46 @@ def generate_date_amendment_fax_route():
     # 1. Extract Table Configuration & Data
     for_columns = request.form.getlist("for_columns")
     read_columns = request.form.getlist("read_columns")
-    for_rows_count = int(request.form.get("for_rows_count", 1))
-    read_rows_count = int(request.form.get("read_rows_count", 1))
+    for_rows_count = safe_int(form_get("for_rows_count", 1), 1)
+    read_rows_count = safe_int(form_get("read_rows_count", 1), 1)
 
     for_rows = []
     for i in range(for_rows_count):
         row_data = {}
         for col in for_columns:
-            row_data[col] = request.form.get(f"for_{col}_{i}", "")
+            row_data[col] = form_get(f"for_{col}_{i}", "")
         for_rows.append(row_data)
 
     read_rows = []
     for i in range(read_rows_count):
         row_data = {}
         for col in read_columns:
-            row_data[col] = request.form.get(f"read_{col}_{i}", "")
+            row_data[col] = form_get(f"read_{col}_{i}", "")
         read_rows.append(row_data)
 
     # 2. Assemble document payload
     data = {
-        "ref_no": request.form.get("ref_no", ""),
-        "fax_no": request.form.get("fax_no", ""),
-        "ref_date": request.form.get("ref_date", ""),
-        "to_text": request.form.get("to_text", ""),
-        "subject_hindi": request.form.get("subject_hindi", ""),
-        "subject_english": request.form.get("subject_english", ""),
-        "ref_text": request.form.get("ref_text", ""),
-        "ref_to_hindi": request.form.get("ref_to_hindi", ""),
-        "ref_to_eng": request.form.get("ref_to_eng", ""),
-        "num_courses_hindi": request.form.get("num_courses_hindi", "तीन"),
-        "num_courses_eng": request.form.get("num_courses_eng", "three"),
-        "courses_plural_eng": request.form.get("courses_plural_eng", "Courses"),
-        "amended_courses_hindi": request.form.get("amended_courses_hindi", "एक"),
-        "amended_courses_eng": request.form.get("amended_courses_eng", "one"),
+        "ref_no": form_get("ref_no", ""),
+        "fax_no": form_get("fax_no", ""),
+        "ref_date": form_get("ref_date", ""),
+        "to_text": form_get("to_text", ""),
+        "subject_hindi": form_get("subject_hindi", ""),
+        "subject_english": form_get("subject_english", ""),
+        "ref_text": form_get("ref_text", ""),
+        "ref_to_hindi": form_get("ref_to_hindi", ""),
+        "ref_to_eng": form_get("ref_to_eng", ""),
+        "num_courses_hindi": form_get("num_courses_hindi", "तीन"),
+        "num_courses_eng": form_get("num_courses_eng", "three"),
+        "courses_plural_eng": form_get("courses_plural_eng", "Courses"),
+        "amended_courses_hindi": form_get("amended_courses_hindi", "एक"),
+        "amended_courses_eng": form_get("amended_courses_eng", "one"),
         "for_columns": for_columns,
         "for_rows": for_rows,
         "read_columns": read_columns,
         "read_rows": read_rows,
-        "sig_name": request.form.get("sig_name", ""),
-        "sig_desig": request.form.get("sig_desig", ""),
-        "for_director": request.form.get("for_director", "")
+        "sig_name": form_get("sig_name", ""),
+        "sig_desig": form_get("sig_desig", ""),
+        "for_director": form_get("for_director", "")
     }
 
     # Generate Fax document
@@ -1121,7 +1163,7 @@ def generate_date_amendment_fax_route():
     # Save to dashboard history
     save_history({
         "filename": filename,
-        "degree": f"Date Amendment Fax ({request.form.get('course_type_select', 'C.E.P.')})",
+        "degree": f"Date Amendment Fax ({form_get('course_type_select', 'C.E.P.')})",
         "period": "N/A",
         "generated_at": datetime.now().strftime("%d %b %Y, %I:%M %p"),
         "departments_count": for_rows_count,
@@ -1145,33 +1187,33 @@ def mayurpankh_erp():
 def generate_mayurpankh_erp_fax_route():
     # 1. Extract Table Configuration & Data
     columns = request.form.getlist("columns")
-    rows_count = int(request.form.get("rows_count", 1))
+    rows_count = safe_int(form_get("rows_count", 1), 1)
 
     rows = []
     for i in range(rows_count):
         row_data = {}
         for col in columns:
-            row_data[col] = request.form.get(f"{col}_{i}", "")
+            row_data[col] = form_get(f"{col}_{i}", "")
         rows.append(row_data)
 
     # 2. Assemble document payload
     data = {
-        "ref_no": request.form.get("ref_no", ""),
-        "fax_no": request.form.get("fax_no", ""),
-        "ref_date": request.form.get("ref_date", ""),
-        "to_text": request.form.get("to_text", ""),
-        "subject_hindi": request.form.get("subject_hindi", ""),
-        "subject_english": request.form.get("subject_english", ""),
-        "ref_text": request.form.get("ref_text", ""),
-        "attn_text": request.form.get("attn_text", ""),
-        "body_hindi": request.form.get("body_hindi", ""),
-        "body_english": request.form.get("body_english", ""),
-        "confirm_text": request.form.get("confirm_text", ""),
+        "ref_no": form_get("ref_no", ""),
+        "fax_no": form_get("fax_no", ""),
+        "ref_date": form_get("ref_date", ""),
+        "to_text": form_get("to_text", ""),
+        "subject_hindi": form_get("subject_hindi", ""),
+        "subject_english": form_get("subject_english", ""),
+        "ref_text": form_get("ref_text", ""),
+        "attn_text": form_get("attn_text", ""),
+        "body_hindi": form_get("body_hindi", ""),
+        "body_english": form_get("body_english", ""),
+        "confirm_text": form_get("confirm_text", ""),
         "columns": columns,
         "rows": rows,
-        "sig_name": request.form.get("sig_name", ""),
-        "sig_desig": request.form.get("sig_desig", ""),
-        "for_director": request.form.get("for_director", "")
+        "sig_name": form_get("sig_name", ""),
+        "sig_desig": form_get("sig_desig", ""),
+        "for_director": form_get("for_director", "")
     }
 
     # Generate Fax document
@@ -1202,25 +1244,25 @@ def appraisal_proforma():
 @app.route("/generate-appraisal-proforma", methods=["POST"])
 def generate_appraisal_proforma_route():
     data = {
-        "student_name_hindi":   request.form.get("student_name_hindi", ""),
-        "father_name_hindi":    request.form.get("father_name_hindi", ""),
-        "student_name_eng":     request.form.get("student_name_eng", ""),
-        "father_name_eng":      request.form.get("father_name_eng", ""),
-        "branch_semester":      request.form.get("branch_semester", ""),
-        "mobile_no":            request.form.get("mobile_no", ""),
-        "institute_name":       request.form.get("institute_name", ""),
-        "group_name":           request.form.get("group_name", ""),
-        "group_director":       request.form.get("group_director", ""),
-        "div_head_coordinator": request.form.get("div_head_coordinator", ""),
-        "project_title":        request.form.get("project_title", ""),
-        "work_description":     request.form.get("work_description", ""),
-        "date_of_joining":      request.form.get("date_of_joining", ""),
-        "date_of_completion":   request.form.get("date_of_completion", ""),
-        "attendance_grade":     request.form.get("attendance_grade", ""),
-        "performance_rating":   request.form.get("performance_rating", ""),
-        "report_submitted":     request.form.get("report_submitted", ""),
-        "remarks":              request.form.get("remarks", ""),
-        "recommendation":       request.form.get("recommendation", "")
+        "student_name_hindi":   form_get("student_name_hindi", ""),
+        "father_name_hindi":    form_get("father_name_hindi", ""),
+        "student_name_eng":     form_get("student_name_eng", ""),
+        "father_name_eng":      form_get("father_name_eng", ""),
+        "branch_semester":      form_get("branch_semester", ""),
+        "mobile_no":            form_get("mobile_no", ""),
+        "institute_name":       form_get("institute_name", ""),
+        "group_name":           form_get("group_name", ""),
+        "group_director":       form_get("group_director", ""),
+        "div_head_coordinator": form_get("div_head_coordinator", ""),
+        "project_title":        form_get("project_title", ""),
+        "work_description":     form_get("work_description", ""),
+        "date_of_joining":      form_get("date_of_joining", ""),
+        "date_of_completion":   form_get("date_of_completion", ""),
+        "attendance_grade":     form_get("attendance_grade", ""),
+        "performance_rating":   form_get("performance_rating", ""),
+        "report_submitted":     form_get("report_submitted", ""),
+        "remarks":              form_get("remarks", ""),
+        "recommendation":       form_get("recommendation", "")
     }
 
     filepath, filename = generate_appraisal_proforma(data)
@@ -1259,19 +1301,19 @@ def generate_coordinator_nomination_route(master_id):
     if not master:
         return "Master not found", 404
         
-    trainees_json = request.form.get("trainees_json", "[]")
+    trainees_json = form_get("trainees_json", "[]")
     try:
         trainees = json.loads(trainees_json)
     except Exception:
         trainees = []
 
     data = {
-        "training_session": request.form.get("training_session", ""),
-        "ref_no":           request.form.get("ref_no", ""),
-        "date":             request.form.get("date", ""),
-        "signatory_name":   request.form.get("signatory_name", ""),
-        "signatory_desig":  request.form.get("signatory_desig", ""),
-        "recipient_group":  request.form.get("recipient_group", ""),
+        "training_session": form_get("training_session", ""),
+        "ref_no":           form_get("ref_no", ""),
+        "date":             form_get("date", ""),
+        "signatory_name":   form_get("signatory_name", ""),
+        "signatory_desig":  form_get("signatory_desig", ""),
+        "recipient_group":  form_get("recipient_group", ""),
         "trainees":         trainees
     }
 
@@ -1311,7 +1353,7 @@ def generate_internship_noting_route(master_id):
     if not master:
         return "Master not found", 404
         
-    rows_json = request.form.get("rows_json", "[]")
+    rows_json = form_get("rows_json", "[]")
     try:
         rows = json.loads(rows_json)
     except Exception:
@@ -1319,7 +1361,7 @@ def generate_internship_noting_route(master_id):
 
     data = {"rows": rows}
     for var in master.get("variables", []):
-        data[var.lower()] = request.form.get(var, "")
+        data[var.lower()] = form_get(var, "")
 
     filepath, filename = generate_internship_noting(master_id, data)
 

@@ -1,7 +1,3 @@
-# ============================================================
-# ion_generator.py — Fills placeholders in master DOCX
-# ============================================================
-
 from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -11,6 +7,7 @@ import os
 import math
 import shutil
 from datetime import datetime
+from logic.docx_utils import get_safe, replace_placeholders_in_paragraph, has_unreplaced_placeholders
 
 OUTPUT_DIR = "generated_notices"
 
@@ -18,13 +15,6 @@ def set_para_spacing(para, before=0, after=0):
     pf = para.paragraph_format
     pf.space_before = Pt(before)
     pf.space_after = Pt(after)
-
-def replace_in_paragraph(para, placeholders):
-    """Replace placeholders in a paragraph while preserving formatting"""
-    for run in para.runs:
-        for key, value in placeholders.items():
-            if key in run.text:
-                run.text = run.text.replace(key, value)
 
 def set_table_borders(table):
     """Manually add visible borders to a table using raw XML"""
@@ -98,23 +88,23 @@ def generate_ion(master_filename, data):
 
     # Build placeholders dict (Preserves legacy mappings for backward compatibility)
     placeholders = {
-        "{{DEGREE}}":                   data.get("degree", ""),
-        "{{START_MONTH}}":              data.get("start_month", ""),
-        "{{START_YEAR}}":               data.get("start_year", ""),
-        "{{END_MONTH}}":                data.get("end_month", ""),
-        "{{END_YEAR}}":                 data.get("end_year", ""),
-        "{{LAST_DATE}}":                data.get("last_date", ""),
-        "{{ION_NUMBER}}":               data.get("ion_number", ""),
-        "{{NOTICE_DATE}}":              data.get("notice_date", ""),
-        "{{SIGNATORY_NAME}}":           data.get("signatory_name", ""),
-        "{{SIGNATORY_DESIGNATION}}":    data.get("signatory_designation", ""),
+        "{{DEGREE}}":                   get_safe(data, "degree", ""),
+        "{{START_MONTH}}":              get_safe(data, "start_month", ""),
+        "{{START_YEAR}}":               get_safe(data, "start_year", ""),
+        "{{END_MONTH}}":                get_safe(data, "end_month", ""),
+        "{{END_YEAR}}":                 get_safe(data, "end_year", ""),
+        "{{LAST_DATE}}":                get_safe(data, "last_date", ""),
+        "{{ION_NUMBER}}":               get_safe(data, "ion_number", ""),
+        "{{NOTICE_DATE}}":              get_safe(data, "notice_date", ""),
+        "{{SIGNATORY_NAME}}":           get_safe(data, "signatory_name", ""),
+        "{{SIGNATORY_DESIGNATION}}":    get_safe(data, "signatory_designation", ""),
     }
 
     # 🚀 DYNAMIC INJECTION: Loops through any new variables sent from the web form
     for key, value in data.items():
-        if isinstance(value, str):
+        if value is not None:
             # Maps the dictionary key 'employee_name' to the document tag '{{employee_name}}'
-            placeholders[f"{{{{{key}}}}}"] = value
+            placeholders[f"{{{{{key}}}}}"] = str(value)
 
     # Replace placeholders in all paragraphs
     dept_para_index = None
@@ -122,14 +112,14 @@ def generate_ion(master_filename, data):
         if "{{DEPARTMENTS_TABLE}}" in para.text:
             dept_para_index = i
         else:
-            replace_in_paragraph(para, placeholders)
+            replace_placeholders_in_paragraph(para, placeholders)
 
     # Replace placeholders in tables
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
                 for para in cell.paragraphs:
-                    replace_in_paragraph(para, placeholders)
+                    replace_placeholders_in_paragraph(para, placeholders)
 
     # Handle legacy departments table placeholder
     if dept_para_index is not None:
@@ -145,6 +135,9 @@ def generate_ion(master_filename, data):
             dept_para._element.addnext(
                 build_departments_table(doc, departments)._element
             )
+
+    if has_unreplaced_placeholders(doc):
+        print("WARNING: Unreplaced placeholders detected in the generated ION document!")
 
     doc.save(output_path)
     return output_path, filename
