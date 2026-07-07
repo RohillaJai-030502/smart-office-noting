@@ -53,11 +53,11 @@
                         <div class="col-md-1 text-center fw-bold text-muted small">..(1)</div>
                         <div class="col-md-7">
                             <label class="form-label mb-1 fw-semibold text-muted small">Reference Source / संदर्भ पत्र-ईमेल</label>
-                            <input type="text" id="ref_source_1" class="form-control form-control-sm bg-white" readonly style="font-size: 0.85rem;">
+                            <input type="text" id="ref_source_1" class="form-control form-control-sm bg-white" style="font-size: 0.85rem;">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label mb-1 fw-semibold text-muted small">Reference Date / संदर्भ तिथि</label>
-                            <input type="text" id="ref_date_1" class="form-control form-control-sm bg-white" readonly style="font-size: 0.85rem;">
+                            <input type="text" id="ref_date_1" class="form-control form-control-sm bg-white" style="font-size: 0.85rem;">
                         </div>
                     </div>
                     
@@ -305,6 +305,9 @@
         }
     }
     
+    let refSource1Edited = false;
+    let refDate1Edited = false;
+
     function updateLabName() {
         const formNo = document.getElementById('form_no').value;
         const parts = formNo.split('/');
@@ -312,12 +315,16 @@
         document.getElementById('lab_name_hidden').value = labName;
         
         // Sync Reference 1 source
-        document.getElementById('ref_source_1').value = formNo;
+        if (!refSource1Edited) {
+            document.getElementById('ref_source_1').value = formNo;
+        }
     }
     
     function updateFirstReferenceDate() {
         const dateVal = document.getElementById('ref_date').value;
-        document.getElementById('ref_date_1').value = dateVal;
+        if (!refDate1Edited) {
+            document.getElementById('ref_date_1').value = dateVal;
+        }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -344,6 +351,8 @@
         document.getElementById('btn-add-row-field').addEventListener('click', addRow);
         document.getElementById('form_no').addEventListener('input', updateLabName);
         document.getElementById('ref_date').addEventListener('input', updateFirstReferenceDate);
+        document.getElementById('ref_source_1').addEventListener('input', () => { refSource1Edited = true; });
+        document.getElementById('ref_date_1').addEventListener('input', () => { refDate1Edited = true; });
         document.getElementById('btn-add-ref').addEventListener('click', () => addReferenceRow());
         
         // Initial sync of Reference 1
