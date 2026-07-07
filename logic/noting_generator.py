@@ -49,6 +49,17 @@ def set_table_borders(table, color="CCCCCC", sz="4"):
     tblPr.append(borders)
 
 
+def apply_table_formatting(table):
+    """Enforces cantSplit on all rows and tblHeader on the first row to repeat headers and prevent row splitting."""
+    if len(table.rows) > 0:
+        trPr = table.rows[0]._tr.get_or_add_trPr()
+        trPr.append(parse_xml(f'<w:tblHeader {nsdecls("w")}/>'))
+    
+    for row in table.rows:
+        trPr = row._tr.get_or_add_trPr()
+        trPr.append(parse_xml(f'<w:cantSplit {nsdecls("w")}/>'))
+
+
 def process_reference_paragraph(doc, data):
     """Rebuilds the reference paragraph to format multiple references dynamically."""
     references = data.get("references", [])
@@ -191,6 +202,7 @@ def build_nominees_table(doc, table_index, columns, nominees):
         run = p.add_run(cell_value)
         run.font.size = Pt(font_size)
         
+    apply_table_formatting(table)
     # Move table to correct position in document XML
     doc.paragraphs[table_index]._element.addnext(table._element)
 
@@ -752,6 +764,7 @@ def build_dynamic_fax_table(doc, table_index, columns, rows):
             run = p.add_run(cell_value)
             run.font.size = Pt(font_size)
             
+    apply_table_formatting(table)
     doc.paragraphs[table_index]._element.addnext(table._element)
 
 
@@ -1065,6 +1078,7 @@ def generate_coordinator_nomination(master_id, data):
                     for run in p.runs:
                         run.font.name = "Times New Roman"
                         run.font.size = Pt(10)
+        apply_table_formatting(table_0)
                         
         # 3. Populate Table 1 (Coordinator Details)
         table_1 = doc.tables[1]
@@ -1089,6 +1103,7 @@ def generate_coordinator_nomination(master_id, data):
                     for run in p.runs:
                         run.font.name = "Times New Roman"
                         run.font.size = Pt(10)
+        apply_table_formatting(table_1)
                         
     output_dir = os.path.join(base_dir, "generated_notices")
     os.makedirs(output_dir, exist_ok=True)
@@ -1171,6 +1186,7 @@ def generate_internship_noting(master_id, data):
                     for run in p.runs:
                         run.font.name = "Times New Roman"
                         run.font.size = Pt(10)
+        apply_table_formatting(table_0)
                         
         # Table 1: S.No, Trainee Name, Month 1, Month 2, Month 3
         table_1 = doc.tables[1]
@@ -1192,6 +1208,7 @@ def generate_internship_noting(master_id, data):
                     for run in p.runs:
                         run.font.name = "Times New Roman"
                         run.font.size = Pt(10)
+        apply_table_formatting(table_1)
                         
     elif master_id == "master_009" and len(doc.tables) >= 1:
         # Table 0: S.No, Branch, Requirement, Application Received, Remarks
@@ -1214,6 +1231,7 @@ def generate_internship_noting(master_id, data):
                     for run in p.runs:
                         run.font.name = "Times New Roman"
                         run.font.size = Pt(10)
+        apply_table_formatting(table_0)
                         
     elif master_id == "master_011" and len(doc.tables) >= 1:
         # Table 0: S.No, Trainee Name, Branch, College, Duration, Remarks
@@ -1237,6 +1255,7 @@ def generate_internship_noting(master_id, data):
                     for run in p.runs:
                         run.font.name = "Times New Roman"
                         run.font.size = Pt(10)
+        apply_table_formatting(table_0)
                         
     # Save the output file
     output_dir = os.path.join(base_dir, "generated_notices")
