@@ -8,14 +8,11 @@ import os
 import json
 import shutil
 from datetime import datetime
+from logic.docx_utils import get_safe, parse_date_safe, replace_placeholders_in_paragraph, has_unreplaced_placeholders
 
 OUTPUT_DIR = "generated_notices"
 
-def replace_in_paragraph(para, placeholders):
-    for key, value in placeholders.items():
-        for run in para.runs:
-            if key in run.text:
-                run.text = run.text.replace(key, str(value))
+
 
 
 def set_cell_background(cell, fill_hex):
@@ -208,8 +205,8 @@ def build_nominees_table(doc, table_index, columns, nominees):
 
 
 def get_course_dates_str(start_date_str, end_date_str):
-    start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-    end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+    start_date = parse_date_safe(start_date_str)
+    end_date = parse_date_safe(end_date_str)
     days_count = (end_date - start_date).days + 1
     
     hindi_months = {
@@ -285,8 +282,8 @@ def generate_tbrl_noting(data):
         "{{REFERENCE_TEXT}}": ref_source,
         "{{REF_DATE}}": data.get("ref_date", ""),
         "{{COURSE_DATES}}": course_dates_str,
-        "{{START_DATE}}": datetime.strptime(data['start_date'], '%Y-%m-%d').strftime('%d %B %Y'),
-        "{{END_DATE}}": datetime.strptime(data['end_date'], '%Y-%m-%d').strftime('%d %B %Y'),
+        "{{START_DATE}}": parse_date_safe(get_safe(data, 'start_date')).strftime('%d %B %Y'),
+        "{{END_DATE}}": parse_date_safe(get_safe(data, 'end_date')).strftime('%d %B %Y'),
         "{{DAYS_COUNT}}": str(days_count),
         "{{ORG_INSTITUTE}}": data.get("org_institute", ""),
         "{{COURSE_TITLE}}": data.get("course_title", ""),
@@ -295,10 +292,10 @@ def generate_tbrl_noting(data):
         "{{KA_KE}}": ka_ke,
         "{{HUA_HUE}}": hua_hue,
         "{{NAMANKAN_WORD}}": nam_word,
-        "{{SIGNATORY_1_NAME}}": data.get("sig1_name", ""),
-        "{{SIGNATORY_1_DESIG}}": data.get("sig1_desig", ""),
-        "{{SIGNATORY_2_NAME}}": data.get("sig2_name", ""),
-        "{{SIGNATORY_2_DESIG}}": data.get("sig2_desig", ""),
+        "{{SIGNATORY_1_NAME}}": get_safe(data, "sig1_name", ""),
+        "{{SIGNATORY_1_DESIG}}": get_safe(data, "sig1_desig", ""),
+        "{{SIGNATORY_2_NAME}}": get_safe(data, "sig2_name", ""),
+        "{{SIGNATORY_2_DESIG}}": get_safe(data, "sig2_desig", ""),
         "संदर्भ सं. (1)": "संदर्भ सं. (2)",
         "संदर्भ सं. (2)": "संदर्भ सं. (3)",
     }
@@ -319,11 +316,13 @@ def generate_tbrl_noting(data):
             table_index = i
             para.text = "" 
         else:
-            replace_in_paragraph(para, placeholders)
+            replace_placeholders_in_paragraph(para, placeholders)
 
     if table_index is not None and data.get('columns') and data.get('nominees'):
         build_nominees_table(doc, table_index, data['columns'], data['nominees'])
 
+    if has_unreplaced_placeholders(doc):
+        print("WARNING: Unreplaced placeholders detected in generated document!")
     doc.save(output_path)
     return output_path, filename
 
@@ -379,8 +378,8 @@ def generate_lecture_noting(data):
         "{{REFERENCE_TEXT}}": ref_source,
         "{{REF_DATE}}": data.get("ref_date", ""),
         "{{COURSE_DATES}}": course_dates_str,
-        "{{START_DATE}}": datetime.strptime(data['start_date'], '%Y-%m-%d').strftime('%d %B %Y'),
-        "{{END_DATE}}": datetime.strptime(data['end_date'], '%Y-%m-%d').strftime('%d %B %Y'),
+        "{{START_DATE}}": parse_date_safe(get_safe(data, 'start_date')).strftime('%d %B %Y'),
+        "{{END_DATE}}": parse_date_safe(get_safe(data, 'end_date')).strftime('%d %B %Y'),
         "{{DAYS_COUNT}}": str(days_count),
         "{{ORG_INSTITUTE}}": data.get("org_institute", ""),
         "{{COURSE_TITLE}}": data.get("course_title", ""),
@@ -390,10 +389,10 @@ def generate_lecture_noting(data):
         "{{KA_KE}}": ka_ke,
         "{{HUA_HUE}}": hua_hue,
         "{{NAMANKAN_WORD}}": nam_word,
-        "{{SIGNATORY_1_NAME}}": data.get("sig1_name", ""),
-        "{{SIGNATORY_1_DESIG}}": data.get("sig1_desig", ""),
-        "{{SIGNATORY_2_NAME}}": data.get("sig2_name", ""),
-        "{{SIGNATORY_2_DESIG}}": data.get("sig2_desig", ""),
+        "{{SIGNATORY_1_NAME}}": get_safe(data, "sig1_name", ""),
+        "{{SIGNATORY_1_DESIG}}": get_safe(data, "sig1_desig", ""),
+        "{{SIGNATORY_2_NAME}}": get_safe(data, "sig2_name", ""),
+        "{{SIGNATORY_2_DESIG}}": get_safe(data, "sig2_desig", ""),
         "संदर्भ सं. (1)": "संदर्भ सं. (2)",
         "संदर्भ सं. (2)": "संदर्भ सं. (3)",
     }
@@ -414,11 +413,13 @@ def generate_lecture_noting(data):
             table_index = i
             para.text = "" 
         else:
-            replace_in_paragraph(para, placeholders)
+            replace_placeholders_in_paragraph(para, placeholders)
 
     if table_index is not None and data.get('columns') and data.get('nominees'):
         build_nominees_table(doc, table_index, data['columns'], data['nominees'])
 
+    if has_unreplaced_placeholders(doc):
+        print("WARNING: Unreplaced placeholders detected in generated document!")
     doc.save(output_path)
     return output_path, filename
 
@@ -474,8 +475,8 @@ def generate_dgmss_noting(data):
         "{{REFERENCE_TEXT}}": ref_source,
         "{{REF_DATE}}": data.get("ref_date", ""),
         "{{COURSE_DATES}}": course_dates_str,
-        "{{START_DATE}}": datetime.strptime(data['start_date'], '%Y-%m-%d').strftime('%d %B %Y'),
-        "{{END_DATE}}": datetime.strptime(data['end_date'], '%Y-%m-%d').strftime('%d %B %Y'),
+        "{{START_DATE}}": parse_date_safe(get_safe(data, 'start_date')).strftime('%d %B %Y'),
+        "{{END_DATE}}": parse_date_safe(get_safe(data, 'end_date')).strftime('%d %B %Y'),
         "{{DAYS_COUNT}}": str(days_count),
         "{{ORG_INSTITUTE}}": data.get("org_institute", ""),
         "{{COURSE_TITLE}}": data.get("course_title", ""),
@@ -484,10 +485,10 @@ def generate_dgmss_noting(data):
         "{{KA_KE}}": ka_ke,
         "{{HUA_HUE}}": hua_hue,
         "{{NAMANKAN_WORD}}": nam_word,
-        "{{SIGNATORY_1_NAME}}": data.get("sig1_name", ""),
-        "{{SIGNATORY_1_DESIG}}": data.get("sig1_desig", ""),
-        "{{SIGNATORY_2_NAME}}": data.get("sig2_name", ""),
-        "{{SIGNATORY_2_DESIG}}": data.get("sig2_desig", ""),
+        "{{SIGNATORY_1_NAME}}": get_safe(data, "sig1_name", ""),
+        "{{SIGNATORY_1_DESIG}}": get_safe(data, "sig1_desig", ""),
+        "{{SIGNATORY_2_NAME}}": get_safe(data, "sig2_name", ""),
+        "{{SIGNATORY_2_DESIG}}": get_safe(data, "sig2_desig", ""),
         "संदर्भ सं. (1)": "संदर्भ सं. (2)",
         "संदर्भ सं. (2)": "संदर्भ सं. (3)",
     }
@@ -508,11 +509,13 @@ def generate_dgmss_noting(data):
             table_index = i
             para.text = "" 
         else:
-            replace_in_paragraph(para, placeholders)
+            replace_placeholders_in_paragraph(para, placeholders)
 
     if table_index is not None and data.get('columns') and data.get('nominees'):
         build_nominees_table(doc, table_index, data['columns'], data['nominees'])
 
+    if has_unreplaced_placeholders(doc):
+        print("WARNING: Unreplaced placeholders detected in generated document!")
     doc.save(output_path)
     return output_path, filename
 
@@ -569,8 +572,8 @@ def generate_fee_noting(data):
         "{{REF_DATE}}": data.get("ref_date", ""),
         "{{REF_MAIL_DATE}}": ref_mail_date,
         "{{COURSE_DATES}}": course_dates_str,
-        "{{START_DATE}}": datetime.strptime(data['start_date'], '%Y-%m-%d').strftime('%d %B %Y'),
-        "{{END_DATE}}": datetime.strptime(data['end_date'], '%Y-%m-%d').strftime('%d %B %Y'),
+        "{{START_DATE}}": parse_date_safe(get_safe(data, 'start_date')).strftime('%d %B %Y'),
+        "{{END_DATE}}": parse_date_safe(get_safe(data, 'end_date')).strftime('%d %B %Y'),
         "{{DAYS_COUNT}}": str(days_count),
         "{{ORG_INSTITUTE}}": data.get("org_institute", ""),
         "{{COURSE_TITLE}}": data.get("course_title", ""),
@@ -579,10 +582,10 @@ def generate_fee_noting(data):
         "{{KA_KE}}": ka_ke,
         "{{HUA_HUE}}": hua_hue,
         "{{NAMANKAN_WORD}}": nam_word,
-        "{{SIGNATORY_1_NAME}}": data.get("sig1_name", ""),
-        "{{SIGNATORY_1_DESIG}}": data.get("sig1_desig", ""),
-        "{{SIGNATORY_2_NAME}}": data.get("sig2_name", ""),
-        "{{SIGNATORY_2_DESIG}}": data.get("sig2_desig", ""),
+        "{{SIGNATORY_1_NAME}}": get_safe(data, "sig1_name", ""),
+        "{{SIGNATORY_1_DESIG}}": get_safe(data, "sig1_desig", ""),
+        "{{SIGNATORY_2_NAME}}": get_safe(data, "sig2_name", ""),
+        "{{SIGNATORY_2_DESIG}}": get_safe(data, "sig2_desig", ""),
         "संदर्भ सं. (1)": "संदर्भ सं. (2)",
         "संदर्भ सं. (2)": "संदर्भ सं. (3)",
     }
@@ -603,11 +606,13 @@ def generate_fee_noting(data):
             table_index = i
             para.text = "" 
         else:
-            replace_in_paragraph(para, placeholders)
+            replace_placeholders_in_paragraph(para, placeholders)
 
     if table_index is not None and data.get('columns') and data.get('nominees'):
         build_nominees_table(doc, table_index, data['columns'], data['nominees'])
 
+    if has_unreplaced_placeholders(doc):
+        print("WARNING: Unreplaced placeholders detected in generated document!")
     doc.save(output_path)
     return output_path, filename
 
@@ -674,16 +679,16 @@ def generate_cancellation_noting(data):
         "{{CANCEL_REASON}}": data.get("cancel_reason", ""),
         "{{COURSE_TYPE_SHORT}}": data.get("course_type_short", ""),
         "{{COURSE_DATES}}": course_dates_str,
-        "{{START_DATE}}": datetime.strptime(data['start_date'], '%Y-%m-%d').strftime('%d %B %Y'),
-        "{{END_DATE}}": datetime.strptime(data['end_date'], '%Y-%m-%d').strftime('%d %B %Y'),
+        "{{START_DATE}}": parse_date_safe(get_safe(data, 'start_date')).strftime('%d %B %Y'),
+        "{{END_DATE}}": parse_date_safe(get_safe(data, 'end_date')).strftime('%d %B %Y'),
         "{{DAYS_COUNT}}": str(days_count),
         "{{ORG_INSTITUTE}}": data.get("org_institute", ""),
         "{{COURSE_TITLE}}": data.get("course_title", ""),
         "{{GROUP_NAME}}": f"{data.get('group_name', '')} Group",
-        "{{SIGNATORY_1_NAME}}": data.get("sig1_name", ""),
-        "{{SIGNATORY_1_DESIG}}": data.get("sig1_desig", ""),
-        "{{SIGNATORY_2_NAME}}": data.get("sig2_name", ""),
-        "{{SIGNATORY_2_DESIG}}": data.get("sig2_desig", ""),
+        "{{SIGNATORY_1_NAME}}": get_safe(data, "sig1_name", ""),
+        "{{SIGNATORY_1_DESIG}}": get_safe(data, "sig1_desig", ""),
+        "{{SIGNATORY_2_NAME}}": get_safe(data, "sig2_name", ""),
+        "{{SIGNATORY_2_DESIG}}": get_safe(data, "sig2_desig", ""),
         "संदर्भ सं. (1)": "संदर्भ सं. (2)",
         "संदर्भ सं. (2)": "संदर्भ सं. (3)",
     }
@@ -704,11 +709,13 @@ def generate_cancellation_noting(data):
             table_index = i
             para.text = "" 
         else:
-            replace_in_paragraph(para, placeholders)
+            replace_placeholders_in_paragraph(para, placeholders)
 
     if table_index is not None and data.get('columns') and data.get('nominees'):
         build_nominees_table(doc, table_index, data['columns'], data['nominees'])
 
+    if has_unreplaced_placeholders(doc):
+        print("WARNING: Unreplaced placeholders detected in generated document!")
     doc.save(output_path)
     return output_path, filename
 
@@ -838,7 +845,7 @@ def generate_date_amendment_fax(data):
                 r.font.name = "Times New Roman"
                 r.font.size = Pt(10)
         else:
-            replace_in_paragraph(para, placeholders)
+            replace_placeholders_in_paragraph(para, placeholders)
             
     # Draw first table ("For")
     if table_index_for is not None and data.get("for_columns") and data.get("for_rows"):
@@ -848,6 +855,8 @@ def generate_date_amendment_fax(data):
     if table_index_read is not None and data.get("read_columns") and data.get("read_rows"):
         build_dynamic_fax_table(doc, table_index_read, data["read_columns"], data["read_rows"])
         
+    if has_unreplaced_placeholders(doc):
+        print("WARNING: Unreplaced placeholders detected in generated document!")
     doc.save(output_path)
     return output_path, filename
 
@@ -938,13 +947,15 @@ def generate_mayurpankh_erp_fax(data):
             r.font.name = "Times New Roman"
             r.font.size = Pt(10)
         else:
-            replace_in_paragraph(para, placeholders)
+            replace_placeholders_in_paragraph(para, placeholders)
             
     # Draw the dynamic table
     # Draw the dynamic table
     if table_index is not None and data.get("columns") and data.get("rows"):
         build_dynamic_fax_table(doc, table_index, data["columns"], data["rows"])
         
+    if has_unreplaced_placeholders(doc):
+        print("WARNING: Unreplaced placeholders detected in generated document!")
     doc.save(output_path)
     return output_path, filename
 
@@ -1017,6 +1028,8 @@ def generate_appraisal_proforma(data):
     filename = f"Appraisal_Proforma_{clean_name}_{timestamp}.docx"
     output_path = os.path.join(output_dir, filename)
     
+    if has_unreplaced_placeholders(doc):
+        print("WARNING: Unreplaced placeholders detected in generated document!")
     doc.save(output_path)
     return output_path, filename
 
@@ -1112,6 +1125,8 @@ def generate_coordinator_nomination(master_id, data):
     clean_name = master["name"].replace(" ", "_").replace("/", "_")
     filename = f"{clean_name}_{timestamp}.docx"
     output_path = os.path.join(output_dir, filename)
+    if has_unreplaced_placeholders(doc):
+        print("WARNING: Unreplaced placeholders detected in generated document!")
     doc.save(output_path)
     return output_path, filename
 
@@ -1134,32 +1149,18 @@ def generate_internship_noting(master_id, data):
     # 1. Standard variable replacements
     placeholders = {}
     for var in master.get("variables", []):
-        placeholders[var] = data.get(var.lower(), "")
+        placeholders[f"{{{{{var}}}}}"] = data.get(var.lower(), "")
         
-    # Helper to replace placeholders in a collection of paragraphs
-    def replace_placeholders(paragraphs, ph_map):
-        for para in paragraphs:
-            for key, val in ph_map.items():
-                placeholder = f"{{{{{key}}}}}"
-                if placeholder in para.text:
-                    # If placeholder is in one run, replace it there
-                    replaced = False
-                    for run in para.runs:
-                        if placeholder in run.text:
-                            run.text = run.text.replace(placeholder, str(val))
-                            replaced = True
-                    # Fallback to paragraph-level replace
-                    if not replaced:
-                        para.text = para.text.replace(placeholder, str(val))
-
     # Replace in standard paragraphs
-    replace_placeholders(doc.paragraphs, placeholders)
+    for para in doc.paragraphs:
+        replace_placeholders_in_paragraph(para, placeholders)
     
-    # Replace in tables first
+    # Replace in tables
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
-                replace_placeholders(cell.paragraphs, placeholders)
+                for para in cell.paragraphs:
+                    replace_placeholders_in_paragraph(para, placeholders)
                 
     # 2. Populate dynamic tables
     rows_data = data.get("rows", [])
@@ -1265,5 +1266,7 @@ def generate_internship_noting(master_id, data):
     clean_name = master["name"].replace(" ", "_").replace("/", "_")
     filename = f"{clean_name}_{timestamp}.docx"
     output_path = os.path.join(output_dir, filename)
+    if has_unreplaced_placeholders(doc):
+        print("WARNING: Unreplaced placeholders detected in generated document!")
     doc.save(output_path)
     return output_path, filename
