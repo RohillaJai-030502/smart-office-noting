@@ -1,0 +1,24 @@
+@echo off
+echo ========================================================
+echo TBRL Smart Noting - Launcher
+echo ========================================================
+echo.
+
+if not exist venv (
+    echo [ERROR] Virtual environment 'venv' not found!
+    echo Please run 'install_offline.bat' first.
+    echo.
+    pause
+    exit /b
+)
+
+echo Activating virtual environment...
+call venv\Scripts\activate.bat
+
+echo.
+echo Launching browser at http://127.0.0.1:5000/ ...
+start http://127.0.0.1:5000/
+
+echo Starting Flask Application Server...
+python app.py
+pause
