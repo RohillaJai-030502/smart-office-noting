@@ -7,7 +7,7 @@ import os
 import math
 import shutil
 from datetime import datetime
-from logic.docx_utils import get_safe, replace_placeholders_in_paragraph, has_unreplaced_placeholders
+from logic.docx_utils import get_safe, replace_placeholders_in_paragraph, has_unreplaced_placeholders, get_unique_timestamp
 
 OUTPUT_DIR = "generated_notices"
 
@@ -70,7 +70,7 @@ def generate_ion(master_filename, data):
     if not os.path.exists(master_path):
         raise FileNotFoundError(f"Master not found: {master_path}")
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_unique_timestamp()
     
     # Smart Filename Generation: Checks if it's the legacy ION form or a new dynamic form
     if data.get("degree"):

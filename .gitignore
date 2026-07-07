@@ -13,3 +13,7 @@ Thumbs.db
 
 # Generated Notices
 generated_notices/
+
+# Application Secrets & Configuration
+secret_key.txt
+config.json

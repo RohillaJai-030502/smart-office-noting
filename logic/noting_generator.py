@@ -8,7 +8,7 @@ import os
 import json
 import shutil
 from datetime import datetime
-from logic.docx_utils import get_safe, parse_date_safe, replace_placeholders_in_paragraph, has_unreplaced_placeholders
+from logic.docx_utils import get_safe, parse_date_safe, replace_placeholders_in_paragraph, has_unreplaced_placeholders, get_unique_timestamp
 
 OUTPUT_DIR = "generated_notices"
 
@@ -235,7 +235,7 @@ def generate_tbrl_noting(data):
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     master_path = os.path.join("masters", "TBRL_Noting_Master.docx")
     
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_unique_timestamp()
     group = data.get('group_name', 'General').replace("/", "-")
     filename = f"TBRL_Noting_{group}_{timestamp}.docx"
     output_path = os.path.join(OUTPUT_DIR, filename)
@@ -331,7 +331,7 @@ def generate_lecture_noting(data):
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     master_path = os.path.join("masters", "Lecture_Noting_Master.docx")
     
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_unique_timestamp()
     group = data.get('group_name', 'General').replace("/", "-")
     filename = f"Lecture_Noting_{group}_{timestamp}.docx"
     output_path = os.path.join(OUTPUT_DIR, filename)
@@ -428,7 +428,7 @@ def generate_dgmss_noting(data):
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     master_path = os.path.join("masters", "DGMSS_Noting_Master.docx")
     
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_unique_timestamp()
     group = data.get('group_name', 'General').replace("/", "-")
     filename = f"DGMSS_Noting_{group}_{timestamp}.docx"
     output_path = os.path.join(OUTPUT_DIR, filename)
@@ -524,7 +524,7 @@ def generate_fee_noting(data):
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     master_path = os.path.join("masters", "Fee_Noting_Master.docx")
     
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_unique_timestamp()
     group = data.get('group_name', 'General').replace("/", "-")
     filename = f"Fee_Noting_{group}_{timestamp}.docx"
     output_path = os.path.join(OUTPUT_DIR, filename)
@@ -621,7 +621,7 @@ def generate_cancellation_noting(data):
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     master_path = os.path.join("masters", "Cancellation_Noting_Master.docx")
     
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_unique_timestamp()
     group = data.get('group_name', 'General').replace("/", "-")
     filename = f"Cancellation_Noting_{group}_{timestamp}.docx"
     output_path = os.path.join(OUTPUT_DIR, filename)
@@ -780,7 +780,7 @@ def generate_date_amendment_fax(data):
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     master_path = os.path.join("masters", "Date_Amendment_Fax.docx")
     
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_unique_timestamp()
     filename = f"Date_Amendment_Fax_{timestamp}.docx"
     output_path = os.path.join(OUTPUT_DIR, filename)
     
@@ -866,7 +866,7 @@ def generate_mayurpankh_erp_fax(data):
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     master_path = os.path.join("masters", "Mayurpankh_ERP_Notice.docx")
     
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_unique_timestamp()
     filename = f"Mayurpankh_ERP_Notice_{timestamp}.docx"
     output_path = os.path.join(OUTPUT_DIR, filename)
     
@@ -1009,7 +1009,7 @@ def generate_appraisal_proforma(data):
     
     # Format a filename
     from datetime import datetime
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_unique_timestamp()
     clean_name = data.get("student_name_eng", "Trainee").replace(" ", "_")
     filename = f"Appraisal_Proforma_{clean_name}_{timestamp}.docx"
     output_path = os.path.join(output_dir, filename)
@@ -1107,7 +1107,7 @@ def generate_coordinator_nomination(master_id, data):
     output_dir = os.path.join(base_dir, "generated_notices")
     os.makedirs(output_dir, exist_ok=True)
     
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_unique_timestamp()
     clean_name = master["name"].replace(" ", "_").replace("/", "_")
     filename = f"{clean_name}_{timestamp}.docx"
     output_path = os.path.join(output_dir, filename)
@@ -1248,7 +1248,7 @@ def generate_internship_noting(master_id, data):
     output_dir = os.path.join(base_dir, "generated_notices")
     os.makedirs(output_dir, exist_ok=True)
     
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_unique_timestamp()
     clean_name = master["name"].replace(" ", "_").replace("/", "_")
     filename = f"{clean_name}_{timestamp}.docx"
     output_path = os.path.join(output_dir, filename)
