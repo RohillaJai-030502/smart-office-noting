@@ -14,8 +14,16 @@ import re
 import docx
 from datetime import datetime
 
+import secrets
+
 app = Flask(__name__)
-app.secret_key = "ion_generator_secret_2024"
+
+SECRET_KEY_FILE = "secret_key.txt"
+if not os.path.exists(SECRET_KEY_FILE):
+    with open(SECRET_KEY_FILE, "w") as f:
+        f.write(secrets.token_hex(32))
+with open(SECRET_KEY_FILE, "r") as f:
+    app.secret_key = f.read().strip()
 
 # ── File Paths ──
 DATA_FILE     = "data.json"
@@ -41,8 +49,17 @@ def load_json(filepath, default):
     return default
 
 def save_json(filepath, data):
-    with open(filepath, "w") as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
+    import tempfile
+    dir_name = os.path.dirname(os.path.abspath(filepath)) or "."
+    fd, tmp_path = tempfile.mkstemp(dir=dir_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+        os.replace(tmp_path, filepath)
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise
 
 def load_departments():
     return load_json(DATA_FILE, {"departments": []})["departments"]
@@ -89,15 +106,25 @@ def save_masters(masters):
     save_json(MASTERS_FILE, {"masters": masters})
 
 def load_config():
-    return load_json(CONFIG_FILE, {"password": "Tbrl0000"})
+    config = load_json(CONFIG_FILE, {"password": "Tbrl0000"})
+    if "password_hash" not in config:
+        from werkzeug.security import generate_password_hash
+        old_password = config.get("password", "Tbrl0000")
+        config["password_hash"] = generate_password_hash(old_password)
+        if "password" in config:
+            del config["password"]
+        save_json(CONFIG_FILE, config)
+    return config
+
+from werkzeug.security import generate_password_hash, check_password_hash
 
 def check_password(password):
     config = load_config()
-    return password == config.get("password", "Tbrl0000")
+    return check_password_hash(config.get("password_hash", ""), password)
 
 def form_get(field, default=""):
-    """form_get() that respects the default for blank/empty values too."""
-    val = form_get(field)
+    """request.form.get() that respects the default for blank/empty values too."""
+    val = request.form.get(field)
     return default if val is None or val == "" else val
 
 def safe_int(value, default=1):
@@ -106,6 +133,9 @@ def safe_int(value, default=1):
         return int(value)
     except (TypeError, ValueError):
         return default
+
+# Initialize config and auto-hash password on server startup
+load_config()
 
 def parse_date_safe(value, fmt="%Y-%m-%d"):
     """Parses a date string safely, raising a ValueError on formatting error."""
@@ -1448,4 +1478,4 @@ def api_templates():
     return jsonify(filtered)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    app.run(host="127.0.0.1", port=5001, debug=False)

@@ -1,5 +1,11 @@
 import re
+import uuid
 from datetime import datetime
+
+def get_unique_timestamp():
+    """Generates a timestamp suffixed with a unique 6-character UUID segment to avoid collisions."""
+    return datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:6]
+
 
 def get_safe(d, key, default=""):
     """Returns the default if the key is missing OR if the value is None."""
