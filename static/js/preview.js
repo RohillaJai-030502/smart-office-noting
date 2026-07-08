@@ -254,6 +254,50 @@ function updateUniversalPreview() {
         let listHTML = `<div style="font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-bottom: 10px; font-size: 10.5pt; text-transform: uppercase;">Variables Summary / विवरण सारांश</div>`;
         listHTML += `<table style="width:100%; border-collapse:collapse; font-size:10pt;">`;
         
+        const bilingMap = {
+            "REF_NO": "Reference No / संदर्भ संख्या",
+            "REF_DATE": "Date / दिनांक",
+            "DATE": "Date / दिनांक",
+            "START_DATE": "Start Date / आरंभ तिथि",
+            "END_DATE": "End Date / समाप्ति तिथि",
+            "ORG_INSTITUTE": "Institute Name / संस्थान का नाम",
+            "COLLEGE_NAME": "Institute Name / संस्थान का नाम",
+            "INSTITUTE_NAME": "Institute Name / संस्थान का नाम",
+            "COURSE_TITLE": "Title / शीर्षक",
+            "LECTURE_TITLE": "Title / शीर्षक",
+            "PROJECT_TITLE": "Title / शीर्षक",
+            "COURSE_TYPE": "Course Type / पाठ्यक्रम का प्रकार",
+            "GROUP_NAME": "Group Name / समूह का नाम",
+            "FEE_AMOUNT": "Fee Amount / शुल्क राशि",
+            "BENEFICIARY_NAME": "Beneficiary / लाभार्थी का नाम",
+            "BUDGET_HEAD": "Budget Head / बजट शीर्ष",
+            "ORIGINAL_REF_NO": "Original Ref / मूल संदर्भ सं",
+            "REASON_CANCELLATION": "Reason / निरस्तीकरण का कारण",
+            "SPEAKER_NAME": "Speaker Name / वक्ता का नाम",
+            "VENUE": "Venue / स्थान",
+            "STUDENT_NAME_ENG": "Student Name / छात्र का नाम",
+            "STUDENT_NAME": "Student Name / छात्र का नाम",
+            "FATHER_NAME_ENG": "Father's Name / पिता का नाम",
+            "FATHER_NAME": "Father's Name / पिता का नाम",
+            "MOBILE_NO": "Mobile No / मोबाइल नंबर",
+            "DATE_OF_JOINING": "Date of Joining / शामिल होने की तिथि",
+            "DATE_OF_COMPLETION": "Date of Completion / पूर्ण होने की तिथि",
+            "ATTENDANCE_GRADE": "Attendance Grade / उपस्थिति ग्रेड",
+            "PERFORMANCE_RATING": "Performance Rating / प्रदर्शन रेटिंग",
+            "REPORT_SUBMITTED": "Report Submitted / रिपोर्ट प्रस्तुत",
+            "INTERNSHIP_DURATION": "Internship Duration / इंटर्नशिप अवधि",
+            "LAST_DATE": "Last Date / अंतिम तिथि",
+            "STIPEND_RATE": "Stipend Rate / स्टाइपेंड दर",
+            "MENTOR_NAME_DESIG": "Mentor Details / मेंटर विवरण",
+            "VISIT_DATE": "Visit Date / यात्रा की तिथि",
+            "EMAIL_DATE": "Email Date / ईमेल की तिथि",
+            "MENTOR_EMAIL": "Mentor Email / मेंटर ईमेल",
+            "TRAINING_PERIOD": "Training Period / प्रशिक्षण अवधि",
+            "TO_TEXT": "To (Recipient) / सेवा में",
+            "FAX_NO": "Fax No / फैक्स संख्या",
+            "REF_TEXT": "Reference Text / संदर्भ पाठ"
+        };
+        
         let hasVars = false;
         formInputs.forEach(input => {
             const id = input.id || input.name;
@@ -265,10 +309,11 @@ function updateUniversalPreview() {
             }
             
             hasVars = true;
+            const cleanLabel = bilingMap[id.toUpperCase()] || id.replace(/_/g, ' ');
             listHTML += `
               <tr style="border-bottom:1px solid #eee;">
-                <td style="width:35%; padding:4px 0; font-weight:bold; color:#555;">${id.replace(/_/g, ' ')}:</td>
-                <td style="padding:4px 0;">${val.replace(/\n/g, '<br>')}</td>
+                <td style="width:42%; padding:4px 0; font-weight:bold; color:#555; font-size:9.5pt;">${cleanLabel}:</td>
+                <td style="padding:4px 0; font-size:9.5pt;">${val.replace(/\n/g, '<br>')}</td>
               </tr>
             `;
         });

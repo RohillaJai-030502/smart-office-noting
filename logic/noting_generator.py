@@ -47,7 +47,7 @@ def set_table_borders(table, color="CCCCCC", sz="4"):
 
 
 def apply_table_formatting(table):
-    """Enforces cantSplit on all rows and tblHeader on the first row to repeat headers and prevent row splitting."""
+    """Enforces cantSplit on all rows, tblHeader on the first row, and explicit column widths/padding."""
     if len(table.rows) > 0:
         trPr = table.rows[0]._tr.get_or_add_trPr()
         trPr.append(parse_xml(f'<w:tblHeader {nsdecls("w")}/>'))
@@ -55,6 +55,66 @@ def apply_table_formatting(table):
     for row in table.rows:
         trPr = row._tr.get_or_add_trPr()
         trPr.append(parse_xml(f'<w:cantSplit {nsdecls("w")}/>'))
+
+    # Dynamic column widths calculation to prevent overflow (A4 printable area = 6.75 inches)
+    num_cols = len(table.columns)
+    if num_cols > 0:
+        total_width = Inches(6.75)
+        widths = [total_width / num_cols] * num_cols
+        
+        # Read headers
+        headers = []
+        if len(table.rows) > 0:
+            for cell in table.rows[0].cells:
+                headers.append(cell.text.strip().lower())
+                
+        # Assign specific widths based on keywords
+        assigned_total = 0
+        assigned_indices = set()
+        
+        for idx, header in enumerate(headers):
+            if any(kw in header for kw in ["s.n.", "sl.", "क्रम"]):
+                widths[idx] = Inches(0.4)
+                assigned_total += Inches(0.4)
+                assigned_indices.add(idx)
+            elif any(kw in header for kw in ["pis", "roll", "mobile", "contact", "phone", "फोन", "रोल"]):
+                widths[idx] = Inches(0.9)
+                assigned_total += Inches(0.9)
+                assigned_indices.add(idx)
+            elif any(kw in header for kw in ["name", "design", "college", "institute", "संगठन", "नाम", "पद"]):
+                widths[idx] = Inches(1.8)
+                assigned_total += Inches(1.8)
+                assigned_indices.add(idx)
+
+        # Distribute remaining width
+        unassigned_count = num_cols - len(assigned_indices)
+        if unassigned_count > 0:
+            remaining_width = max(Inches(1.0), total_width - assigned_total)
+            share = remaining_width / unassigned_count
+            for idx in range(num_cols):
+                if idx not in assigned_indices:
+                    widths[idx] = share
+                    
+        # Apply cell widths
+        for row in table.rows:
+            for idx, cell in enumerate(row.cells):
+                if idx < len(widths):
+                    cell.width = widths[idx]
+
+    # Set tight global cell margins (padding) on the table
+    tblPr = table._tbl.tblPr
+    # Check if a cell margins block already exists
+    existing_mar = tblPr.find(qn('w:tblCellMar'))
+    if existing_mar is not None:
+        tblPr.remove(existing_mar)
+    tblPr.append(parse_xml(
+        f'<w:tblCellMar {nsdecls("w")}>'
+        f'  <w:top w:w="80" w:type="dxa"/>'
+        f'  <w:bottom w:w="80" w:type="dxa"/>'
+        f'  <w:left w:w="120" w:type="dxa"/>'
+        f'  <w:right w:w="120" w:type="dxa"/>'
+        f'</w:tblCellMar>'
+    ))
 
 
 def process_reference_paragraph(doc, data):
