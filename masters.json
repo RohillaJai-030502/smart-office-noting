@@ -266,28 +266,6 @@
             ]
         },
         {
-            "id": "master_004",
-            "name": "ION Requirement of Training Students / प्रशिक्षु आवश्यकता आमंत्रण नोट",
-            "description": "Bilingual Inter-Office Note inviting scientists to submit trainee requirements for the next session.",
-            "filename": "ION_Requirement_Training_Students_Master.docx",
-            "created_at": "2026-07-07",
-            "is_default": true,
-            "form_type": "dynamic",
-            "module": "internship",
-            "sub_module": "general",
-            "variables": [
-                "INTERNSHIP_DURATION",
-                "SESSION_MONTHS_HINDI",
-                "SUBMISSION_DEADLINE_HINDI",
-                "SESSION_PERIOD_ENG",
-                "SUBMISSION_DEADLINE_ENG",
-                "REF_NO",
-                "DATE",
-                "SIGNATORY_NAME",
-                "SIGNATORY_DESIG"
-            ]
-        },
-        {
             "id": "master_005",
             "name": "Nomination of Project Coordinator / परियोजना समन्वयक नामांकन",
             "description": "ION requesting technically designated scientists to nominate coordinators for industrial training.",
