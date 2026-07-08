@@ -93,8 +93,11 @@ def load_columns_map():
     except Exception:
         return {}
 
+def load_masters_raw():
+    return load_json(MASTERS_FILE, {"masters": []})["masters"]
+
 def load_masters():
-    masters = load_json(MASTERS_FILE, {"masters": []})["masters"]
+    masters = load_masters_raw()
     valid_masters = []
     for m in masters:
         filepath = os.path.join("masters", m["filename"])
@@ -438,7 +441,10 @@ def masters_page():
 def masters_manager():
     if not session.get("master_unlocked"):
         return redirect(url_for("masters_page"))
-    return render_template("master_manager.html", masters=load_masters())
+    raw_masters = load_masters_raw()
+    for m in raw_masters:
+        m["file_exists"] = os.path.exists(os.path.join("masters", m["filename"]))
+    return render_template("master_manager.html", masters=raw_masters)
 
 @app.route("/masters/lock")
 def masters_lock():
@@ -457,7 +463,7 @@ def create_master():
     if not name:
         return redirect(url_for("masters_manager"))
 
-    masters     = load_masters()
+    masters     = load_masters_raw()
     source      = get_master_safe(masters, source_id)
     if not source:
         flash("No master templates exist to copy from.")
@@ -495,12 +501,14 @@ def upload_new_master():
     file = request.files['file']
     name = form_get("name", "Unnamed Master").strip()
     description = form_get("description", "Uploaded via Document Manager").strip()
+    module = form_get("module", "training")
+    sub_module = form_get("sub_module", "noting")
     
     if not file.filename.lower().endswith('.docx'):
         flash("Only .docx files are accepted.")
         return redirect(url_for("masters_manager"))
         
-    masters = load_masters()
+    masters = load_masters_raw()
     new_id = f"master_{str(len(masters)+1).zfill(3)}"
     safe_filename = secure_filename(f"{new_id}_{file.filename}")
     
@@ -526,19 +534,21 @@ def upload_new_master():
         form_type = "static"
         flash_msg = "🖨️ Static Template added! No variables found, saving as a printable blank document."
         
-        # Append to masters.json
-        masters.append({
-            "id": new_id,
-            "name": name,
-            "description": description,
-            "filename": safe_filename,
-            "created_at": datetime.now().strftime("%Y-%m-%d"),
-            "is_default": False,
-            "form_type": form_type,  # Now correctly assigns dynamic vs static
-            "variables": variables
-        })
-        save_masters(masters)
-        flash(flash_msg)
+    # Append to masters.json
+    masters.append({
+        "id": new_id,
+        "name": name,
+        "description": description,
+        "filename": safe_filename,
+        "created_at": datetime.now().strftime("%Y-%m-%d"),
+        "is_default": False,
+        "form_type": form_type,
+        "variables": variables,
+        "module": module,
+        "sub_module": sub_module
+    })
+    save_masters(masters)
+    flash(flash_msg)
         
     return redirect(url_for("masters_manager"))
 
@@ -546,7 +556,7 @@ def upload_new_master():
 def toggle_default_master(master_id):
     if not session.get("master_unlocked"):
         return redirect(url_for("masters_page"))
-    masters = load_masters()
+    masters = load_masters_raw()
     for m in masters:
         if m["id"] == master_id:
             m["is_default"] = not m.get("is_default", False)
@@ -565,7 +575,7 @@ def delete_master(master_id):
         flash("❌ Incorrect password! Deletion cancelled.")
         return redirect(url_for("masters_manager"))
 
-    masters = load_masters()
+    masters = load_masters_raw()
     master  = next((m for m in masters if m["id"] == master_id), None)
     
     if master and not master.get("is_default"):
@@ -599,7 +609,7 @@ def download_master(master_id):
 def upload_master(master_id):
     if not session.get("master_unlocked"):
         return redirect(url_for("masters_page"))
-    masters = load_masters()
+    masters = load_masters_raw()
     master  = next((m for m in masters if m["id"] == master_id), None)
     if master and "file" in request.files:
         file = request.files["file"]
