@@ -1,4 +1,7 @@
 @echo off
+:: Ensure the working directory is the folder where this batch script lives
+cd /d "%~dp0"
+
 echo ========================================================
 echo TBRL Smart Noting - Launcher
 echo ========================================================
