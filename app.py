@@ -564,6 +564,30 @@ def toggle_default_master(master_id):
     save_masters(masters)
     return redirect(url_for("masters_manager"))
 
+
+@app.route("/masters/edit-details/<master_id>", methods=["POST"])
+def edit_master_details(master_id):
+    password = form_get("password", "")
+    if not check_password(password):
+        return jsonify({"success": False, "error": "Incorrect admin password."}), 403
+        
+    new_name = form_get("name", "").strip()
+    new_desc = form_get("description", "").strip()
+    
+    if not new_name:
+        return jsonify({"success": False, "error": "Template name cannot be empty."}), 400
+        
+    masters = load_masters_raw()
+    master = next((m for m in masters if m["id"] == master_id), None)
+    if not master:
+        return jsonify({"success": False, "error": "Template not found."}), 404
+        
+    master["name"] = new_name
+    master["description"] = new_desc
+    save_masters(masters)
+    
+    return jsonify({"success": True, "message": "Template details updated successfully!"})
+
 @app.route("/masters/delete/<master_id>", methods=["POST"])
 def delete_master(master_id):
     if not session.get("master_unlocked"):
