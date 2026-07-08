@@ -711,16 +711,37 @@ def submit_dynamic():
 # ══════════════════════════════════════
 # TBRL NOTING GENERATOR (NEW)
 # ══════════════════════════════════════
-@app.route("/tbrl-noting", methods=["GET"])
-def tbrl_noting():
-    defaults = load_defaults()
-    groups = ["AFTD", "ADS", "BIDS", "BEHI", "SS", "TELIC", "PPG", "QMG", "ETF", "PC", "WHD", "EXPD", "WHT&E", "ARISE", "PCD", "AIG", "RTRS", "S&D", "R&QA", "WKS", "SEED", "CERBERUS", "DPB", "HSP", "I2G", "HRDD"]
-    courses = load_courses()
-    default_columns = load_columns_map().get("tbrl_noting", [])
-    return render_template("tbrl_noting_form.html", defaults=defaults, groups=groups, courses=courses, default_columns=default_columns)
+NOTING_CONFIGS = {
+    "tbrl": {
+        "generator": generate_tbrl_noting,
+        "label": "TBRL Noting",
+        "master_used": "TBRL Noting Master"
+    },
+    "lecture": {
+        "generator": generate_lecture_noting,
+        "label": "Lecture Noting",
+        "master_used": "Lecture Noting Master"
+    },
+    "dgmss": {
+        "generator": generate_dgmss_noting,
+        "label": "DGMSS Noting",
+        "master_used": "DGMSS Noting Master"
+    },
+    "fee": {
+        "generator": generate_fee_noting,
+        "label": "Fee Related Noting",
+        "master_used": "Fee Related Noting Master"
+    },
+    "cancellation": {
+        "generator": generate_cancellation_noting,
+        "label": "Nomination Cancellation",
+        "master_used": "Nomination Cancellation Master"
+    }
+}
 
-@app.route("/generate-noting", methods=["POST"])
-def generate_noting():
+def handle_noting_generation(config_key, extra_fields_fn=None):
+    cfg = NOTING_CONFIGS[config_key]
+
     # 1. Update Signatory Defaults in Memory
     defaults = load_defaults()
     defaults["sig1_name"] = form_get("sig1_name", "")
@@ -761,7 +782,7 @@ def generate_noting():
             "date": form_get("ref_date", "")
         }]
 
-    # 4. Compile all data to send to noting_generator.py
+    # 4. Compile all data
     data = {
         "ref_no": ref_no,
         "subject_hindi": form_get("subject_hindi"),
@@ -783,22 +804,36 @@ def generate_noting():
         "lab_name": lab_name,
         "references": references
     }
+    
+    if extra_fields_fn:
+        data.update(extra_fields_fn(request.form))
 
     # 5. Generate Document
-    filepath, filename = generate_tbrl_noting(data)
+    filepath, filename = cfg["generator"](data)
     
     # 6. Save to Dashboard History
     save_history({
         "filename": filename,
-        "degree": "TBRL Noting",
+        "degree": cfg["label"],
         "period": f"{data.get('start_date', '')} to {data.get('end_date', '')}",
         "generated_at": datetime.now().strftime("%d %b %Y, %I:%M %p"),
         "departments_count": len(nominees),
-        "master_used": "TBRL Noting Master"
+        "master_used": cfg["master_used"]
     })
     
     return send_file(filepath, as_attachment=True)
 
+@app.route("/tbrl-noting", methods=["GET"])
+def tbrl_noting():
+    defaults = load_defaults()
+    groups = ["AFTD", "ADS", "BIDS", "BEHI", "SS", "TELIC", "PPG", "QMG", "ETF", "PC", "WHD", "EXPD", "WHT&E", "ARISE", "PCD", "AIG", "RTRS", "S&D", "R&QA", "WKS", "SEED", "CERBERUS", "DPB", "HSP", "I2G", "HRDD"]
+    courses = load_courses()
+    default_columns = load_columns_map().get("tbrl_noting", [])
+    return render_template("tbrl_noting_form.html", defaults=defaults, groups=groups, courses=courses, default_columns=default_columns)
+
+@app.route("/generate-noting", methods=["POST"])
+def generate_noting():
+    return handle_noting_generation("tbrl")
 
 # ══════════════════════════════════════
 # LECTURE NOTING GENERATOR
@@ -814,82 +849,7 @@ def lecture_noting():
 
 @app.route("/generate-lecture-noting", methods=["POST"])
 def generate_lecture_noting_route():
-    # 1. Update Signatory Defaults in Memory
-    defaults = load_defaults()
-    defaults["sig1_name"] = form_get("sig1_name", "")
-    defaults["sig1_desig"] = form_get("sig1_desig", "")
-    defaults["sig2_name"] = form_get("sig2_name", "")
-    defaults["sig2_desig"] = form_get("sig2_desig", "")
-    save_json(DEFAULTS_FILE, defaults)
-
-    # 2. Extract Table Configuration & Data
-    columns = request.form.getlist("table_columns")
-    num_rows = safe_int(form_get("num_rows", 1), 1)
-    
-    nominees = []
-    for i in range(num_rows):
-        row_data = {}
-        for col in columns:
-            row_data[col] = form_get(f"{col}_{i}", "")
-        nominees.append(row_data)
-
-    course_type = form_get("course_type")
-    
-    ref_no = form_get("form_no") or form_get("ref_no")
-    lab_name = form_get("lab_name", "टीबीआरएल")
-    
-    references_raw = form_get("references_json")
-    references = []
-    if references_raw:
-        try:
-            references = json.loads(references_raw)
-        except Exception:
-            pass
-    if not references:
-        references = [{
-            "source": ref_no or "",
-            "date": form_get("ref_date", "")
-        }]
-
-    # Compile all data
-    data = {
-        "ref_no": ref_no,
-        "subject_hindi": form_get("subject_hindi"),
-        "subject_english": form_get("subject_english"),
-        "reference_text": form_get("reference_text"),
-        "ref_date": form_get("ref_date"),
-        "start_date": form_get("start_date"),
-        "end_date": form_get("end_date"),
-        "org_institute": form_get("org_institute"),
-        "course_title": form_get("course_title"),
-        "lecture_title": form_get("lecture_title"),
-        "course_type": course_type,
-        "group_name": form_get("group_name"),
-        "sig1_name": defaults["sig1_name"],
-        "sig1_desig": defaults["sig1_desig"],
-        "sig2_name": defaults["sig2_name"],
-        "sig2_desig": defaults["sig2_desig"],
-        "columns": columns,
-        "nominees": nominees,
-        "lab_name": lab_name,
-        "references": references
-    }
-
-    # Generate Document
-    filepath, filename = generate_lecture_noting(data)
-    
-    # Save to Dashboard History
-    save_history({
-        "filename": filename,
-        "degree": "Lecture Noting",
-        "period": f"{data.get('start_date', '')} to {data.get('end_date', '')}",
-        "generated_at": datetime.now().strftime("%d %b %Y, %I:%M %p"),
-        "departments_count": len(nominees),
-        "master_used": "Lecture Noting Master"
-    })
-    
-    return send_file(filepath, as_attachment=True)
-
+    return handle_noting_generation("lecture")
 
 # ══════════════════════════════════════
 # DGMSS NOTING GENERATOR
@@ -905,83 +865,8 @@ def dgmss_noting():
 
 @app.route("/generate-dgmss-noting", methods=["POST"])
 def generate_dgmss_noting_route():
-    # 1. Update Signatory Defaults in Memory
-    defaults = load_defaults()
-    defaults["sig1_name"] = form_get("sig1_name", "")
-    defaults["sig1_desig"] = form_get("sig1_desig", "")
-    defaults["sig2_name"] = form_get("sig2_name", "")
-    defaults["sig2_desig"] = form_get("sig2_desig", "")
-    save_json(DEFAULTS_FILE, defaults)
+    return handle_noting_generation("dgmss")
 
-    # 2. Extract Table Configuration & Data
-    columns = request.form.getlist("table_columns")
-    num_rows = safe_int(form_get("num_rows", 1), 1)
-    
-    nominees = []
-    for i in range(num_rows):
-        row_data = {}
-        for col in columns:
-            row_data[col] = form_get(f"{col}_{i}", "")
-        nominees.append(row_data)
-
-    course_type = form_get("course_type")
-    
-    ref_no = form_get("form_no") or form_get("ref_no")
-    lab_name = form_get("lab_name", "टीबीआरएल")
-    
-    references_raw = form_get("references_json")
-    references = []
-    if references_raw:
-        try:
-            references = json.loads(references_raw)
-        except Exception:
-            pass
-    if not references:
-        references = [{
-            "source": ref_no or "",
-            "date": form_get("ref_date", "")
-        }]
-
-    # Compile all data
-    data = {
-        "ref_no": ref_no,
-        "subject_hindi": form_get("subject_hindi"),
-        "subject_english": form_get("subject_english"),
-        "reference_text": form_get("reference_text"),
-        "ref_date": form_get("ref_date"),
-        "start_date": form_get("start_date"),
-        "end_date": form_get("end_date"),
-        "org_institute": form_get("org_institute"),
-        "course_title": form_get("course_title"),
-        "course_type": course_type,
-        "group_name": form_get("group_name"),
-        "sig1_name": defaults["sig1_name"],
-        "sig1_desig": defaults["sig1_desig"],
-        "sig2_name": defaults["sig2_name"],
-        "sig2_desig": defaults["sig2_desig"],
-        "columns": columns,
-        "nominees": nominees,
-        "lab_name": lab_name,
-        "references": references
-    }
-
-    # Generate Document
-    filepath, filename = generate_dgmss_noting(data)
-    
-    # Save to Dashboard History
-    save_history({
-        "filename": filename,
-        "degree": "DGMSS Noting",
-        "period": f"{data.get('start_date', '')} to {data.get('end_date', '')}",
-        "generated_at": datetime.now().strftime("%d %b %Y, %I:%M %p"),
-        "departments_count": len(nominees),
-        "master_used": "DGMSS Noting Master"
-    })
-    
-    return send_file(filepath, as_attachment=True)
-
-
-# FEE RELATED NOTING GENERATOR
 # ══════════════════════════════════════
 @app.route("/fee-noting", methods=["GET"])
 def fee_noting():
@@ -994,84 +879,10 @@ def fee_noting():
 
 @app.route("/generate-fee-noting", methods=["POST"])
 def generate_fee_noting_route():
-    # 1. Update Signatory Defaults in Memory
-    defaults = load_defaults()
-    defaults["sig1_name"] = form_get("sig1_name", "")
-    defaults["sig1_desig"] = form_get("sig1_desig", "")
-    defaults["sig2_name"] = form_get("sig2_name", "")
-    defaults["sig2_desig"] = form_get("sig2_desig", "")
-    save_json(DEFAULTS_FILE, defaults)
+    def fee_extra(form):
+        return {"ref_mail_date": form_get("ref_mail_date")}
+    return handle_noting_generation("fee", fee_extra)
 
-    # 2. Extract Table Configuration & Data
-    columns = request.form.getlist("table_columns")
-    num_rows = safe_int(form_get("num_rows", 1), 1)
-    
-    nominees = []
-    for i in range(num_rows):
-        row_data = {}
-        for col in columns:
-            row_data[col] = form_get(f"{col}_{i}", "")
-        nominees.append(row_data)
-
-    course_type = form_get("course_type")
-    
-    ref_no = form_get("form_no") or form_get("ref_no")
-    lab_name = form_get("lab_name", "टीबीआरएल")
-    
-    references_raw = form_get("references_json")
-    references = []
-    if references_raw:
-        try:
-            references = json.loads(references_raw)
-        except Exception:
-            pass
-    if not references:
-        references = [{
-            "source": ref_no or "",
-            "date": form_get("ref_date", "")
-        }]
-
-    # Compile all data
-    data = {
-        "ref_no": ref_no,
-        "subject_hindi": form_get("subject_hindi"),
-        "subject_english": form_get("subject_english"),
-        "reference_text": form_get("reference_text"),
-        "ref_date": form_get("ref_date"),
-        "ref_mail_date": form_get("ref_mail_date"),
-        "start_date": form_get("start_date"),
-        "end_date": form_get("end_date"),
-        "org_institute": form_get("org_institute"),
-        "course_title": form_get("course_title"),
-        "course_type": course_type,
-        "group_name": form_get("group_name"),
-        "sig1_name": defaults["sig1_name"],
-        "sig1_desig": defaults["sig1_desig"],
-        "sig2_name": defaults["sig2_name"],
-        "sig2_desig": defaults["sig2_desig"],
-        "columns": columns,
-        "nominees": nominees,
-        "lab_name": lab_name,
-        "references": references
-    }
-
-    # Generate Document
-    filepath, filename = generate_fee_noting(data)
-    
-    # Save to Dashboard History
-    save_history({
-        "filename": filename,
-        "degree": "Fee Related Noting",
-        "period": f"{data.get('start_date', '')} to {data.get('end_date', '')}",
-        "generated_at": datetime.now().strftime("%d %b %Y, %I:%M %p"),
-        "departments_count": len(nominees),
-        "master_used": "Fee Related Noting Master"
-    })
-    
-    return send_file(filepath, as_attachment=True)
-
-
-# NOMINATION CANCELLATION NOTING GENERATOR
 # ══════════════════════════════════════
 @app.route("/cancellation-noting", methods=["GET"])
 def cancellation_noting():
@@ -1084,90 +895,18 @@ def cancellation_noting():
 
 @app.route("/generate-cancellation-noting", methods=["POST"])
 def generate_cancellation_noting_route():
-    # 1. Update Signatory Defaults in Memory
-    defaults = load_defaults()
-    defaults["sig1_name"] = form_get("sig1_name", "")
-    defaults["sig1_desig"] = form_get("sig1_desig", "")
-    defaults["sig2_name"] = form_get("sig2_name", "")
-    defaults["sig2_desig"] = form_get("sig2_desig", "")
-    save_json(DEFAULTS_FILE, defaults)
+    def cancellation_extra(form):
+        return {
+            "ref_mail_date": form_get("ref_mail_date"),
+            "ion_ref_source": form_get("ion_ref_source"),
+            "ion_ref_date": form_get("ion_ref_date"),
+            "cancel_nominee_name": form_get("cancel_nominee_name"),
+            "cancel_group_name": form_get("cancel_group_name"),
+            "cancel_reason": form_get("cancel_reason"),
+            "course_type_short": form_get("course_type_short"),
+        }
+    return handle_noting_generation("cancellation", cancellation_extra)
 
-    # 2. Extract Table Configuration & Data
-    columns = request.form.getlist("table_columns")
-    num_rows = safe_int(form_get("num_rows", 1), 1)
-    
-    nominees = []
-    for i in range(num_rows):
-        row_data = {}
-        for col in columns:
-            row_data[col] = form_get(f"{col}_{i}", "")
-        nominees.append(row_data)
-
-    course_type = form_get("course_type")
-    
-    ref_no = form_get("form_no") or form_get("ref_no")
-    lab_name = form_get("lab_name", "टीबीआरएल")
-    
-    references_raw = form_get("references_json")
-    references = []
-    if references_raw:
-        try:
-            references = json.loads(references_raw)
-        except Exception:
-            pass
-    if not references:
-        references = [{
-            "source": ref_no or "",
-            "date": form_get("ref_date", "")
-        }]
-
-    # Compile all data
-    data = {
-        "ref_no": ref_no,
-        "subject_hindi": form_get("subject_hindi"),
-        "subject_english": form_get("subject_english"),
-        "reference_text": form_get("reference_text"),
-        "ref_date": form_get("ref_date"),
-        "ref_mail_date": form_get("ref_mail_date"),
-        "ion_ref_source": form_get("ion_ref_source"),
-        "ion_ref_date": form_get("ion_ref_date"),
-        "cancel_nominee_name": form_get("cancel_nominee_name"),
-        "cancel_group_name": form_get("cancel_group_name"),
-        "cancel_reason": form_get("cancel_reason"),
-        "course_type_short": form_get("course_type_short"),
-        "start_date": form_get("start_date"),
-        "end_date": form_get("end_date"),
-        "org_institute": form_get("org_institute"),
-        "course_title": form_get("course_title"),
-        "course_type": course_type,
-        "group_name": form_get("group_name"),
-        "sig1_name": defaults["sig1_name"],
-        "sig1_desig": defaults["sig1_desig"],
-        "sig2_name": defaults["sig2_name"],
-        "sig2_desig": defaults["sig2_desig"],
-        "columns": columns,
-        "nominees": nominees,
-        "lab_name": lab_name,
-        "references": references
-    }
-
-    # Generate Document
-    filepath, filename = generate_cancellation_noting(data)
-    
-    # Save to Dashboard History
-    save_history({
-        "filename": filename,
-        "degree": "Nomination Cancellation",
-        "period": f"{data.get('start_date', '')} to {data.get('end_date', '')}",
-        "generated_at": datetime.now().strftime("%d %b %Y, %I:%M %p"),
-        "departments_count": len(nominees),
-        "master_used": "Nomination Cancellation Master"
-    })
-    
-    return send_file(filepath, as_attachment=True)
-
-
-# DATE AMENDMENT FAX GENERATOR
 # ═════════════════════════════
 @app.route("/date-amendment-fax", methods=["GET"])
 def date_amendment_fax():
