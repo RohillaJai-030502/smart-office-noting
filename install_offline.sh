@@ -21,10 +21,10 @@ fi
 
 # 3. Activate venv and install libraries offline
 echo
-echo "Installing dependencies offline from offline_packages/..."
+echo "Installing dependencies offline from windows_required_libraries/..."
 source venv/bin/activate
 
-python3 -m pip install --no-index --find-links=offline_packages -r requirements.txt
+python3 -m pip install --no-index --find-links=windows_required_libraries -r requirements.txt
 if [ $? -ne 0 ]; then
     echo "[ERROR] Offline installation failed!"
     exit 1
