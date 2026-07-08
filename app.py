@@ -663,29 +663,21 @@ def submit_dynamic():
     master_path = os.path.join("masters", master["filename"])
     doc = docx.Document(master_path)
     
-    def replace_text(paragraph, key, value):
-        placeholder = f"{{{{{key}}}}}" # Looks for {{variable_name}}
-        if placeholder in paragraph.text:
-            replaced = False
-            for run in paragraph.runs:
-                if placeholder in run.text:
-                    run.text = run.text.replace(placeholder, str(value))
-                    replaced = True
-            if not replaced:
-                paragraph.text = paragraph.text.replace(placeholder, str(value))
+    from logic.docx_utils import replace_placeholders_in_paragraph
+    
+    # Construct placeholders dictionary with brackets {{VARIABLE}}
+    placeholders = {f"{{{{{var}}}}}" : str(data[var]) for var in master.get("variables", [])}
 
     # 4. Search and Replace in standard text
     for para in doc.paragraphs:
-        for k, v in data.items():
-            replace_text(para, k, v)
+        replace_placeholders_in_paragraph(para, placeholders)
             
     # 5. Search and Replace inside tables
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
                 for para in cell.paragraphs:
-                    for k, v in data.items():
-                        replace_text(para, k, v)
+                    replace_placeholders_in_paragraph(para, placeholders)
                         
     # 6. Save the new generated file
     os.makedirs("generated_notices", exist_ok=True)
