@@ -150,7 +150,9 @@
                 "TO_NAME",
                 "SUBJECT",
                 "REF_NO",
-                "NOMINEES_SUMMARY"
+                "NOMINEES_SUMMARY",
+                "SIG_NAME",
+                "SIG_DESIG"
             ]
         },
         {
