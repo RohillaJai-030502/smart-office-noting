@@ -77,6 +77,12 @@ def convert_fee_document():
         parent.remove(tbl_element)
         print("✔ Table successfully replaced with {{COMPLEX_DYNAMIC_TABLE}}.")
 
+        if os.path.exists(dst_path):
+        import shutil
+        from datetime import datetime
+        backup_path = dst_path + f".bak_{datetime.now():%Y%m%d%H%M%S}"
+        shutil.copy2(dst_path, backup_path)
+        print(f"✔ Backup created at: {backup_path}")
     doc.save(dst_path)
     print(f"✔ Formatting preserved template master generated at: {dst_path}")
 
