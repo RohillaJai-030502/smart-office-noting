@@ -21,7 +21,7 @@
     <div class="sidebar-title">Categories</div>
     <ul class="sidebar-links">
       <li>
-        <a href="#" class="sidebar-link active">
+        <a href="#" class="sidebar-link active" data-submodule="general">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>
@@ -45,143 +45,111 @@
 
   <!-- Right Side: Document View (Templates List) -->
   <section class="templates-section">
-    <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; border-bottom: 2px solid var(--secondary-border); padding-bottom: 0.5rem;">
+    <h3 id="category-heading" style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; border-bottom: 2px solid var(--secondary-border); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
       General Internship Templates
     </h3>
     
-    <div class="templates-list">
-      <!-- Call for Training Nominations Form -->
-      <div class="template-card">
-        <div class="template-info">
-          <h4>Call for Training Nominations / प्रशिक्षण नामांकन आमंत्रण</h4>
-          <p>Bilingual notice template to solicit trainee requirements from lab scientists. Custom department list input enabled.</p>
-        </div>
-        <div>
-          <a href="{{ url_for('ion_notice') }}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Draft Notice</a>
-        </div>
-      </div>
-
-      <!-- Trainee Requirement Form -->
-      <div class="template-card">
-        <div class="template-info">
-          <h4>Trainee Requirement Form / प्रशिक्षु आवश्यकता प्रपत्र</h4>
-          <p>Blank printable PDF/Word template for division heads to outline internship disciplines and skills needed.</p>
-        </div>
-        <div>
-          <a href="{{ url_for('download_static', master_id='master_002') }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Download Blank</a>
-        </div>
-      </div>
-
-      <!-- Appraisal Proforma -->
-      <div class="template-card">
-        <div class="template-info">
-          <h4>Appraisal Proforma / मूल्यांकन प्रपत्र</h4>
-          <p>Appraisal Proforma for B.Tech/B.E. industrial trainees at TBRL Chandigarh.</p>
-        </div>
-        <div>
-          <a href="{{ url_for('appraisal_proforma') }}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Draft Proforma</a>
-        </div>
-      </div>
-
-      <!-- ION Requirement of Training Students -->
-      <div class="template-card">
-        <div class="template-info">
-          <h4>ION Requirement of Training Students / प्रशिक्षु आवश्यकता आमंत्रण नोट</h4>
-          <p>Bilingual Inter-Office Note inviting scientists to submit trainee requirements for the next session.</p>
-        </div>
-        <div>
-          <a href="/dynamic-form/master_004" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Draft ION</a>
-        </div>
-      </div>
-
-      <!-- Nomination of Project Coordinator -->
-      <div class="template-card">
-        <div class="template-info">
-          <h4>Nomination of Project Coordinator / परियोजना समन्वयक नामांकन</h4>
-          <p>ION requesting technically designated scientists to nominate coordinators for industrial training.</p>
-        </div>
-        <div>
-          <a href="/coordinator-nomination/master_005" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Draft Nomination</a>
-        </div>
-      </div>
-
-      <!-- HRDD Intimation of Trainee Details -->
-      <div class="template-card">
-        <div class="template-info">
-          <h4>HRDD Intimation of Trainee Details / प्रशिक्षु विवरण एवं समन्वयक आमंत्रण</h4>
-          <p>ION detailing student allocations under the Paid Internship Scheme and requesting coordinator nominations.</p>
-        </div>
-        <div>
-          <a href="/coordinator-nomination/master_006" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Draft Intimation</a>
-        </div>
-      </div>
-
-      <!-- Provisional Certificate -->
-      <div class="template-card">
-        <div class="template-info">
-          <h4>Provisional Certificate / अनंतिम प्रमाण पत्र</h4>
-          <p>Provisional certificate for B.Tech/B.E. trainees verifying current internship status for academic requirements.</p>
-        </div>
-        <div>
-          <a href="/dynamic-form/master_007" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Draft Certificate</a>
-        </div>
-      </div>
-
-      <!-- Payment of Stipend -->
-      <div class="template-card">
-        <div class="template-info">
-          <h4>Payment of Stipend to Interns / पेड इंटर्नशिप स्टाइपेंड भुगतान</h4>
-          <p>Noting sheet authorizing monthly stipend payments to interns under the Paid Internship Scheme.</p>
-        </div>
-        <div>
-          <a href="/internship-noting/master_008" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Draft Stipend Payment</a>
-        </div>
-      </div>
-
-      <!-- Paid Internship Scheme Approval -->
-      <div class="template-card">
-        <div class="template-info">
-          <h4>Paid Internship Scheme Approval / पेड इंटर्नशिप योजना अनुमोदन</h4>
-          <p>Noting sheet for selection approval and review panel summary of applications.</p>
-        </div>
-        <div>
-          <a href="/internship-noting/master_009" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Draft Scheme Approval</a>
-        </div>
-      </div>
-
-      <!-- Date Revision of Intimation -->
-      <div class="template-card">
-        <div class="template-info">
-          <h4>Date Revision of Intimation / सूचना तिथि में संशोधन</h4>
-          <p>Noting sheet requesting extension/revision of date for student notification under Paid Internship Scheme.</p>
-        </div>
-        <div>
-          <a href="/dynamic-form/master_010" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Draft Revision</a>
-        </div>
-      </div>
-
-      <!-- Student Information Noting -->
-      <div class="template-card">
-        <div class="template-info">
-          <h4>Student Information Noting / प्रशिक्षु सूचना नोटिंग</h4>
-          <p>Noting sheet summarizing student nomination applications received for training.</p>
-        </div>
-        <div>
-          <a href="/internship-noting/master_011" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Draft Student Info Note</a>
-        </div>
-      </div>
-
-      <!-- Visit of Faculty Mentor -->
-      <div class="template-card">
-        <div class="template-info">
-          <h4>Visit of Faculty Mentor / फैकल्टी मेंटर विजिट</h4>
-          <p>Noting sheet seeking approval for mentor academic progress review visit.</p>
-        </div>
-        <div>
-          <a href="/dynamic-form/master_012" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Draft Visit Note</a>
-        </div>
+    <div id="templates-container" class="templates-list">
+      <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+        <p>Loading templates under security filter...</p>
       </div>
     </div>
   </section>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const sidebarLinks = document.querySelectorAll('.sidebar-link');
+    const container = document.getElementById('templates-container');
+    const heading = document.getElementById('category-heading');
+    
+    const submoduleNames = {
+      'general': 'General Internship Templates / सामान्य इंटर्नशिप प्रलेख'
+    };
+
+    async function loadTemplates(submodule) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+          <p>Loading templates under security filter...</p>
+        </div>
+      `;
+      
+      heading.textContent = submoduleNames[submodule] || 'Templates';
+      
+      try {
+        const response = await fetch(`/api/templates?module=internship&sub_module=${submodule}`);
+        if (!response.ok) throw new Error('Network response not ok');
+        const templates = await response.json();
+        
+        if (templates.length === 0) {
+          container.innerHTML = `
+            <div style="text-align: center; padding: 3rem; color: var(--text-muted); border: 1px dashed var(--secondary-border); border-radius: var(--radius-md);">
+              <p>No active templates found in this sub-module.</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = templates.map(t => {
+          let actionUrl = '';
+          let actionLabel = '';
+          
+          if (t.form_type === 'static') {
+            actionUrl = `/download-static/\${t.id}`;
+            actionLabel = 'Download Blank';
+          } else if (t.id === 'master_001') {
+            actionUrl = '/ion-notice';
+            actionLabel = 'Draft Notice';
+          } else if (t.id === 'master_003') {
+            actionUrl = '/appraisal-proforma';
+            actionLabel = 'Draft Proforma';
+          } else if (t.id === 'master_005' || t.id === 'master_006') {
+            actionUrl = `/coordinator-nomination/\${t.id}`;
+            actionLabel = 'Draft Nomination';
+          } else if (t.id === 'master_008' || t.id === 'master_009' || t.id === 'master_011') {
+            actionUrl = `/internship-noting/\${t.id}`;
+            actionLabel = 'Draft Noting';
+          } else {
+            actionUrl = `/dynamic-form/\${t.id}`;
+            actionLabel = 'Draft Document';
+          }
+          
+          return `
+            <div class="template-card" style="opacity: 0; transform: translateY(10px); animation: fadeIn 0.3s ease forwards;">
+              <div class="template-info">
+                <h4>\${t.name}</h4>
+                <p>\${t.description || 'No description available for this institutional template.'}</p>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <button type="button" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; cursor: pointer; border-radius: 6px;" onclick="promptEditDetails('\${t.id}', \`\${t.name.replace(/"/g, '&quot;').replace(/'/g, "\\'")}\`, \`\${(t.description || '').replace(/"/g, '&quot;').replace(/'/g, "\\'")}\`)">
+                  ✏️ Edit Info
+                </button>
+                <a href="\${actionUrl}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 6px;">\${actionLabel}</a>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 3rem; color: var(--error); border: 1px solid var(--error); border-radius: var(--radius-md); background: rgba(197, 48, 48, 0.05)">
+            <p>Error loading templates: \${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    loadTemplates('general');
+  });
+</script>
+
+<style>
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
 {% endblock %}

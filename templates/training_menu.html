@@ -152,8 +152,11 @@
                 <h4>${t.name}</h4>
                 <p>${t.description || 'No description available for this institutional template.'}</p>
               </div>
-              <div>
-                <a href="${actionUrl}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">${actionLabel}</a>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <button type="button" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; cursor: pointer; border-radius: 6px;" onclick="promptEditDetails('${t.id}', \`${t.name.replace(/"/g, '&quot;').replace(/'/g, "\\'")}\`, \`${(t.description || '').replace(/"/g, '&quot;').replace(/'/g, "\\'")}\`)">
+                  ✏️ Edit Info
+                </button>
+                <a href="${actionUrl}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 6px;">${actionLabel}</a>
               </div>
             </div>
           `;
