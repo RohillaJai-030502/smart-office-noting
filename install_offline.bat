@@ -36,8 +36,8 @@ python -m pip install --no-index --find-links=windows_required_libraries -r requ
 if %errorlevel% neq 0 (
     echo.
     echo [WARNING] Direct installation failed, attempting fallback loop...
-    :: Fallback to installing wheels individually in resolved order
-    python -m pip install --no-index --find-links=windows_required_libraries blinker click itsdangerous markupsafe typing_extensions lxml jinja2 werkzeug flask python_docx
+    :: Fallback to installing wheels individually in resolved order (dependencies first)
+    python -m pip install --no-index --find-links=windows_required_libraries colorama blinker markupsafe typing_extensions lxml click itsdangerous jinja2 werkzeug flask python_docx
 )
 
 if %errorlevel% neq 0 (
