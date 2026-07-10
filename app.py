@@ -699,8 +699,32 @@ def submit_dynamic():
     
     from logic.docx_utils import replace_placeholders_in_paragraph
     
-    # Construct placeholders dictionary with brackets {{VARIABLE}}
-    placeholders = {f"{{{{{var}}}}}" : str(data[var]) for var in master.get("variables", [])}
+    # 3. Check and build dynamic complex table if present
+    table_var_name = next((var for var in master.get("variables", []) if var.lower() == 'dynamic_complex_table'), None)
+    if table_var_name:
+        columns = request.form.getlist("dynamic_table_columns")
+        rows_count = int(request.form.get("dynamic_table_rows_count", 0))
+        rows = []
+        for i in range(rows_count):
+            row_data = {}
+            for col in columns:
+                val = request.form.get(f"dynamic_cell_{col}_{i}", "")
+                row_data[col] = val
+            rows.append(row_data)
+            
+        # Find paragraph containing the table placeholder
+        found_para = None
+        for para in doc.paragraphs:
+            if f"{{{{{table_var_name}}}}}" in para.text:
+                found_para = para
+                break
+                
+        if found_para:
+            from logic.docx_utils import build_dynamic_table_in_doc
+            build_dynamic_table_in_doc(doc, found_para, columns, rows)
+            
+    # Construct placeholders dictionary with brackets {{VARIABLE}} (excluding table placeholder)
+    placeholders = {f"{{{{{var}}}}}" : str(data[var]) for var in master.get("variables", []) if var.lower() != 'dynamic_complex_table'}
 
     # 4. Search and Replace in standard text
     for para in doc.paragraphs:

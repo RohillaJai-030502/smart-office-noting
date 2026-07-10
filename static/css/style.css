@@ -656,3 +656,24 @@ textarea {
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   margin-bottom: -4px;
 }
+
+/* Custom Column Delete Button */
+.btn-col-delete {
+  background: transparent;
+  border: none;
+  color: #ffcccc;
+  font-size: 1.15rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  line-height: 1;
+  transition: var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-col-delete:hover {
+  color: #ff4d4d;
+  transform: scale(1.2);
+}

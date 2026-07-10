@@ -406,7 +406,7 @@
                     <div class="d-flex align-items-center justify-content-center gap-1">
                         <input type="text" class="form-control form-control-sm text-center fw-bold border-0 bg-transparent text-dark header-input" 
                                 value="${colName}" data-index="${index}" style="font-size:0.85rem; min-width: 100px; padding: 0.1rem;" onchange="updateColumnName(this)">
-                        <button type="button" class="btn-close p-1" style="font-size:0.5rem; cursor:pointer;" onclick="deleteColumn(${index})"></button>
+                        <button type="button" class="btn-col-delete" onclick="deleteColumn(${index})" title="Delete Column">×</button>
                     </div>
                 `;
             }

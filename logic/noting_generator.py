@@ -37,10 +37,10 @@ def set_table_borders(table, color="CCCCCC", sz="4"):
         f'<w:tblBorders {nsdecls("w")}>'
         f'  <w:top w:val="single" w:sz="{sz}" w:space="0" w:color="{color}"/>'
         f'  <w:bottom w:val="single" w:sz="{sz}" w:space="0" w:color="{color}"/>'
+        f'  <w:left w:val="single" w:sz="{sz}" w:space="0" w:color="{color}"/>'
+        f'  <w:right w:val="single" w:sz="{sz}" w:space="0" w:color="{color}"/>'
         f'  <w:insideH w:val="single" w:sz="{sz}" w:space="0" w:color="{color}"/>'
-        f'  <w:left w:val="none"/>'
-        f'  <w:right w:val="none"/>'
-        f'  <w:insideV w:val="none"/>'
+        f'  <w:insideV w:val="single" w:sz="{sz}" w:space="0" w:color="{color}"/>'
         f'</w:tblBorders>'
     )
     tblPr.append(borders)
