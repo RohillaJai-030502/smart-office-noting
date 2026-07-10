@@ -9,6 +9,7 @@ from logic.create_master import create_default_master
 from logic.noting_generator import generate_tbrl_noting, generate_lecture_noting, generate_dgmss_noting, generate_fee_noting, generate_cancellation_noting, generate_date_amendment_fax, generate_mayurpankh_erp_fax, generate_appraisal_proforma, generate_coordinator_nomination, generate_internship_noting  # NEW: TBRL Noting/Fax/ERP Generator Import
 import os
 import json
+import socket
 import shutil
 import re
 import docx
@@ -1266,5 +1267,24 @@ def api_templates():
         
     return jsonify(filtered)
 
+#if __name__ == "__main__":
+    #app.run(host="127.0.0.1", port=5001, debug=False)
+
+def get_lan_ip():
+    """Find this machine's LAN IP address (not 127.0.0.1)."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))  # doesn't actually send data
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = "127.0.0.1"
+    finally:
+        s.close()
+    return ip
+
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5001, debug=False)
+    port = 5001
+    lan_ip = get_lan_ip()
+    print(f" * Local:   http://127.0.0.1:{port}")
+    print(f" * Network: http://{lan_ip}:{port}")
+    app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
