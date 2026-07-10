@@ -42,9 +42,8 @@ Follow these simple, step-by-step guides to complete everyday tasks in the appli
 2. Select the category tab on the left sidebar (e.g., *Noting*, *Fax & Mail*, or *General Internships*).
 3. Find the card for the document you want to create and click **`Draft Noting`** (or **`Draft Document`**).
 4. Fill out all required fields on the web form.
-5. Review the A4 Page Layout on the right side of the screen. Watch out for the dashed red lines representing page breaks to make sure your text fits.
-6. Click the gold **`Generate Document`** button at the bottom of the page.
-7. Click **`Download Document`** to save the generated file to your computer.
+5. Click the gold **`Generate Document`** button at the bottom of the page.
+6. Click **`Download Document`** to save the generated file to your computer.
 
 ### Task 2: How to Access the Master Document Manager
 1. Click **`🔒 Manage Masters`** on the top navigation bar.
@@ -96,4 +95,3 @@ If you are running the program on the offline Windows PC:
 
 * **Master Template**: A blueprint document (`.docx`) containing static layout formats, borders, official headers, and blank placeholders.
 * **Dynamic Variable**: Any word wrapped in `{{ }}` inside a master template. The generator finds these words and turns them into editable text boxes on your screen.
-* **A4 Page Layout Simulator**: A visual helper on the draft page showing how the document will print. The dashed red lines represent page boundaries so you can edit the text to prevent it from spilling onto a second page.
